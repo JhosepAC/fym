@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 
 interface NavbarProps {
   onSearch?: (query: string) => void;
@@ -60,13 +60,13 @@ export default function Navbar({ onSearch, initialQuery = "", transparent = true
             </Link>
           </li>
           <li>
-            <Link href="/search" className="text-gray-400 hover:text-white transition-colors">
+            <Link href="/movies" className="text-gray-400 hover:text-white transition-colors">
               Movies
             </Link>
           </li>
           <li>
-            <Link href="/search" className="text-gray-400 hover:text-white transition-colors">
-              TV Shows
+            <Link href="/series" className="text-gray-400 hover:text-white transition-colors">
+              Series
             </Link>
           </li>
         </ul>
@@ -99,26 +99,6 @@ export default function Navbar({ onSearch, initialQuery = "", transparent = true
             </button>
           )}
         </form>
-
-        <button className="p-2 text-gray-300 hover:text-white transition-colors">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={1.5}
-            stroke="currentColor"
-            className="w-6 h-6"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
-            />
-          </svg>
-        </button>
-        <div className="w-8 h-8 bg-red-600 rounded flex items-center justify-center text-white text-sm font-medium">
-          U
-        </div>
       </div>
     </nav>
   );
