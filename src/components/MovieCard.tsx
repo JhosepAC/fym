@@ -20,15 +20,15 @@ export default function MovieCard({ item, size = "normal" }: MovieCardProps) {
 
   return (
     <div
-      className={`relative flex-shrink-0 cursor-pointer transition-transform duration-200 ${
-        size === "large" ? "w-64 h-96" : "w-44 h-64"
+      className={`relative cursor-pointer transition-transform duration-200 ${
+        size === "large" ? "aspect-[2/3]" : "aspect-[2/3]"
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
         className={`relative w-full h-full rounded-md overflow-hidden bg-gray-800 transition-all duration-200 ${
-          isHovered ? "scale-110 z-20" : "scale-100"
+          isHovered ? "scale-105 z-20 shadow-xl" : "scale-100"
         }`}
       >
         {posterUrl && !imageError ? (
