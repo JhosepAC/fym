@@ -25,9 +25,9 @@ export default async function Home() {
         {heroMovie && <HeroBanner item={heroMovie} />}
         
         <div className="relative z-30 -mt-32">
-          <MovieRow title="Trending Now" items={trending.results.slice(1, 10)} />
-          <MovieRow title="Popular Movies" items={popular.results.slice(0, 10)} />
-          <MovieRow title="Top Rated" items={topRated.results.slice(0, 10)} />
+          <MovieRow title="Trending Now" items={trending.results.slice(1, 15)} autoScrollInterval={3000} />
+          <MovieRow title="Popular Movies" items={popular.results.slice(0, 15)} autoScrollInterval={5000} />
+          <MovieRow title="Top Rated" items={topRated.results.slice(0, 15)} autoScrollInterval={8000} />
         </div>
       </main>
     </div>
