@@ -493,7 +493,7 @@ export default function SeriesDetailsPage() {
                         </div>
                         
                         <div className="flex-1 p-4 flex flex-col justify-center">
-                          <h4 className="text-white font-semibold text-lg leading-tight mb-2 line-clamp-2 group-hover:text-yellow-400 transition-colors">
+                          <h4 className="text-white font-semibold text-lg leading-tight mb-3 group-hover:text-yellow-400 transition-colors">
                             {episode.name}
                           </h4>
                           
@@ -517,8 +517,8 @@ export default function SeriesDetailsPage() {
                       </div>
                       
                       {episode.overview && (
-                        <div className="px-4 pb-4">
-                          <p className="text-gray-400 text-sm line-clamp-2">{episode.overview}</p>
+                        <div className="px-4 pb-4 pt-2 border-t border-white/5 mt-2">
+                          <p className="text-gray-400 text-sm leading-relaxed">{episode.overview}</p>
                         </div>
                       )}
                     </div>
