@@ -205,6 +205,7 @@ export interface TvSeason {
   air_date: string;
   poster_path: string | null;
   episodes: TvEpisode[];
+  vote_average: number;
 }
 
 export interface TvEpisode {
