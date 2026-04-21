@@ -20,6 +20,8 @@ export default function SeriesDetailsPage() {
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
   const [seasonEpisodes, setSeasonEpisodes] = useState<TvEpisode[]>([]);
   const [loadingEpisodes, setLoadingEpisodes] = useState(false);
+  const [selectedEpisode, setSelectedEpisode] = useState<TvEpisode | null>(null);
+  const [seasonDetails, setSeasonDetails] = useState<TvSeason | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFullOverview, setShowFullOverview] = useState(false);
@@ -81,7 +83,9 @@ export default function SeriesDetailsPage() {
       try {
         setLoadingEpisodes(true);
         const seasonData = await apiClient.getTvSeasonDetails(seriesId, selectedSeason);
+        setSeasonDetails(seasonData);
         setSeasonEpisodes(seasonData.episodes || []);
+        setSelectedEpisode(seasonData.episodes?.[0] || null);
       } catch (err) {
         console.error("Failed to load episodes");
       } finally {
@@ -438,21 +442,20 @@ export default function SeriesDetailsPage() {
             <div className="px-6 lg:px-12 pb-12 max-w-7xl mx-auto">
               <h3 className="text-white text-2xl font-semibold mb-6">Episodes</h3>
               
-              <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
+              <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
                 {series.seasons
                   .filter(s => s.season_number > 0)
-                  .map((season, idx) => (
+                  .map((season) => (
                     <button
                       key={season.id}
                       onClick={() => setSelectedSeason(season.season_number)}
-                      className={`flex-shrink-0 px-6 py-3 rounded-xl font-bold transition-all duration-300 ${
+                      className={`flex-shrink-0 px-5 py-2 rounded-lg font-medium transition-all duration-300 ${
                         selectedSeason === season.season_number
-                          ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg shadow-red-600/30 scale-105"
-                          : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10"
+                          ? "bg-red-600 text-white"
+                          : "bg-white/10 text-gray-300 hover:bg-white/20"
                       }`}
                     >
-                      <span className="text-xs opacity-70 block">{idx === 0 ? "First" : `Season ${season.season_number}`}</span>
-                      <span>{season.name}</span>
+                      Season {season.season_number}
                     </button>
                   ))}
               </div>
@@ -462,67 +465,89 @@ export default function SeriesDetailsPage() {
                   <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {seasonEpisodes.map((episode) => (
-                    <div
-                      key={episode.id}
-                      className="group relative bg-gradient-to-br from-gray-900 via-gray-800/80 to-gray-900 rounded-2xl overflow-hidden border border-white/5 hover:border-yellow-400/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-yellow-400/10"
-                    >
-                      <div className="flex">
-                        <div className="flex-shrink-0 w-40 h-28 relative">
-                          {episode.still_path ? (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="lg:col-span-1">
+                    {seasonDetails && (
+                      <div className="sticky top-24 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-white/10">
+                        {seasonDetails.poster_path ? (
+                          <div className="relative w-full aspect-[2/3] mb-4 rounded-xl overflow-hidden">
                             <Image
-                              src={getImageUrl(episode.still_path, IMAGE_SIZES.backdrop.medium) || ""}
-                              alt={episode.name || ""}
+                              src={getImageUrl(seasonDetails.poster_path, IMAGE_SIZES.poster.large) || ""}
+                              alt={seasonDetails.name || ""}
                               fill
-                              className="object-cover transition-transform duration-700 group-hover:scale-110"
+                              className="object-cover"
                             />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                              <svg className="w-12 h-12 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M8 5v14l11-7z" />
-                              </svg>
-                            </div>
-                          )}
-                          <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-lg">
-                            <span className="text-white font-bold text-sm">E{episode.episode_number}</span>
                           </div>
-                          <div className="absolute top-2 right-2 bg-yellow-500/90 backdrop-blur-sm px-2 py-1 rounded-lg">
-                            <span className="text-black font-bold text-sm">★ {episode.vote_average?.toFixed(1)}</span>
+                        ) : (
+                          <div className="w-full aspect-[2/3] bg-gray-800 rounded-xl mb-4 flex items-center justify-center">
+                            <span className="text-gray-500">No poster</span>
+                          </div>
+                        )}
+                        
+                        <h4 className="text-white text-xl font-bold mb-2">{seasonDetails.name}</h4>
+                        
+                        <div className="flex items-center gap-4 text-sm text-gray-400 mb-4">
+                          <span>{seasonDetails.episodes?.length} episodes</span>
+                          <span>{seasonDetails.air_date?.split("-")[0]}</span>
+                        </div>
+                        
+                        {seasonDetails.overview && (
+                          <p className="text-gray-300 text-sm leading-relaxed">{seasonDetails.overview}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="lg:col-span-2 space-y-3 max-h-[70vh] overflow-y-auto pr-2">
+                    {seasonEpisodes.map((episode) => (
+                      <div
+                        key={episode.id}
+                        onClick={() => setSelectedEpisode(episode)}
+                        className={`group cursor-pointer bg-gray-900/50 rounded-xl overflow-hidden border transition-all duration-300 ${
+                          selectedEpisode?.id === episode.id
+                            ? "border-yellow-500 bg-gray-800/50"
+                            : "border-white/5 hover:border-white/20"
+                        }`}
+                      >
+                        <div className="flex">
+                          <div className="flex-shrink-0 w-28 h-20 relative">
+                            {episode.still_path ? (
+                              <Image
+                                src={getImageUrl(episode.still_path, IMAGE_SIZES.backdrop.small) || ""}
+                                alt={episode.name || ""}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                                <svg className="w-8 h-8 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M8 5v14l11-7z" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex-1 p-3 flex flex-col justify-center">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-yellow-400 font-bold text-sm">E{episode.episode_number}</span>
+                              <span className="text-white font-medium">{episode.name}</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-gray-500">
+                              <span>{episode.air_date}</span>
+                              {episode.runtime && <span>{episode.runtime} min</span>}
+                              <span className="text-yellow-400">★ {episode.vote_average?.toFixed(1)}</span>
+                            </div>
                           </div>
                         </div>
                         
-                        <div className="flex-1 p-4 flex flex-col justify-center">
-                          <h4 className="text-white font-semibold text-lg leading-tight mb-3 group-hover:text-yellow-400 transition-colors">
-                            {episode.name}
-                          </h4>
-                          
-                          <div className="flex items-center gap-3 text-xs text-gray-500">
-                            <span className="flex items-center gap-1">
-                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                              {episode.air_date?.split("-")[0]}
-                            </span>
-                            {episode.runtime && (
-                              <span className="flex items-center gap-1">
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                {episode.runtime} min
-                              </span>
-                            )}
+                        {selectedEpisode?.id === episode.id && episode.overview && (
+                          <div className="px-3 pb-3 pt-0">
+                            <p className="text-gray-400 text-sm leading-relaxed">{episode.overview}</p>
                           </div>
-                        </div>
+                        )}
                       </div>
-                      
-                      {episode.overview && (
-                        <div className="px-4 pb-4 pt-2 border-t border-white/5 mt-2">
-                          <p className="text-gray-400 text-sm leading-relaxed">{episode.overview}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

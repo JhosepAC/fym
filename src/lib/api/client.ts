@@ -203,6 +203,7 @@ export interface TvSeason {
   overview: string | null;
   season_number: number;
   air_date: string;
+  poster_path: string | null;
   episodes: TvEpisode[];
 }
 
