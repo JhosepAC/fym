@@ -36,6 +36,7 @@ export const ENDPOINTS = {
     nowPlaying: "/movie/now_playing",
     details: (id: number) => `/movie/${id}`,
     similar: (id: number) => `/movie/${id}/similar`,
+    videos: (id: number) => `/movie/${id}/videos`,
   },
   tv: {
     popular: "/tv/popular",
@@ -43,6 +44,7 @@ export const ENDPOINTS = {
     onTheAir: "/tv/on_the_air",
     details: (id: number) => `/tv/${id}`,
     similar: (id: number) => `/tv/${id}/similar`,
+    videos: (id: number) => `/tv/${id}/videos`,
   },
   search: {
     multi: "/search/multi",

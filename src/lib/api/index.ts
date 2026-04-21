@@ -6,4 +6,6 @@ export {
   type MediaItem,
   type MovieDetail,
   type TvShowDetail,
+  type Video,
+  type VideosResponse,
 } from "./client";

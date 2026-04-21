@@ -74,6 +74,14 @@ class ApiClient {
     return this.fetch<TvShowDetail>(ENDPOINTS.tv.details(id));
   }
 
+  async getMovieVideos(id: number) {
+    return this.fetch<VideosResponse>(ENDPOINTS.movie.videos(id));
+  }
+
+  async getTvVideos(id: number) {
+    return this.fetch<VideosResponse>(ENDPOINTS.tv.videos(id));
+  }
+
   async searchMulti(query: string, page: number = 1) {
     return this.fetch<ApiResponse>(ENDPOINTS.search.multi, {
       query,
@@ -157,6 +165,19 @@ export interface TvShowDetail extends MediaItem {
     poster_path: string | null;
     air_date: string;
   }[];
+}
+
+export interface Video {
+  id: string;
+  key: string;
+  name: string;
+  site: string;
+  type: string;
+}
+
+export interface VideosResponse {
+  id: number;
+  results: Video[];
 }
 
 export const getImageUrl = (path: string | null | undefined, size: string = "w500"): string | null => {
