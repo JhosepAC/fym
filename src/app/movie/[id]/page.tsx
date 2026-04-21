@@ -434,6 +434,39 @@ export default function MovieDetailsPage() {
         </div>
       )}
 
+      {crew.length > 0 && (
+        <div className="px-6 lg:px-12 pb-12 max-w-7xl mx-auto">
+          <h3 className="text-white text-2xl font-semibold mb-6">Crew</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {crew
+              .filter((member) => ["Director", "Screenplay", "Writer", "Producer", "Executive Producer", "Original Story"].includes(member.job))
+              .slice(0, 5)
+              .map((member) => (
+                <div key={member.id} className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/30 hover:border-red-500/50 transition-all duration-300">
+                  {member.profile_path ? (
+                    <div className="relative w-16 h-16 mb-3 mx-auto">
+                      <Image
+                        src={getImageUrl(member.profile_path, IMAGE_SIZES.profile.medium) || ""}
+                        alt={member.name || ""}
+                        fill
+                        className="object-cover rounded-full"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 mb-3 mx-auto bg-gray-700 rounded-full flex items-center justify-center">
+                      <svg className="w-8 h-8 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                      </svg>
+                    </div>
+                  )}
+                  <p className="text-white text-sm font-medium text-center truncate">{member.name}</p>
+                  <p className="text-red-400 text-xs text-center truncate">{member.job}</p>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
       {recommendations.length > 0 && (
         <div className="px-6 lg:px-12 pb-12 max-w-7xl mx-auto">
           <h3 className="text-white text-2xl font-semibold mb-6">Recommended Movies</h3>
