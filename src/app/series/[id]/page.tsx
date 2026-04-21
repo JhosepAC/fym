@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import { apiClient, getImageUrl, IMAGE_SIZES, TMDB_CONFIG } from "@/lib/api";
-import { TvShowDetail, Video, MediaItem, Cast, Crew, WatchProvider } from "@/lib/api/client";
+import { TvShowDetail, Video, MediaItem, Cast, Crew, WatchProvider, TvSeason, TvEpisode } from "@/lib/api/client";
 
 export default function SeriesDetailsPage() {
   const params = useParams();
@@ -17,6 +17,9 @@ export default function SeriesDetailsPage() {
   const [cast, setCast] = useState<Cast[]>([]);
   const [crew, setCrew] = useState<Crew[]>([]);
   const [watchProviders, setWatchProviders] = useState<WatchProvider[]>([]);
+  const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
+  const [seasonEpisodes, setSeasonEpisodes] = useState<TvEpisode[]>([]);
+  const [loadingEpisodes, setLoadingEpisodes] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFullOverview, setShowFullOverview] = useState(false);
@@ -51,6 +54,11 @@ export default function SeriesDetailsPage() {
         setCast(creditsData.cast || []);
         setCrew(creditsData.crew || []);
         
+        const firstSeason = seriesData.seasons?.find(s => s.season_number > 0);
+        if (firstSeason) {
+          setSelectedSeason(firstSeason.season_number);
+        }
+        
         const countryCode = "PE";
         const providers = watchProvidersData.results?.[countryCode];
         if (providers) {
@@ -65,6 +73,24 @@ export default function SeriesDetailsPage() {
 
     fetchSeries();
   }, [seriesId]);
+
+  useEffect(() => {
+    async function fetchSeasonEpisodes() {
+      if (!series || !selectedSeason) return;
+      
+      try {
+        setLoadingEpisodes(true);
+        const seasonData = await apiClient.getTvSeasonDetails(seriesId, selectedSeason);
+        setSeasonEpisodes(seasonData.episodes || []);
+      } catch (err) {
+        console.error("Failed to load episodes");
+      } finally {
+        setLoadingEpisodes(false);
+      }
+    }
+
+    fetchSeasonEpisodes();
+  }, [seriesId, selectedSeason]);
 
   useEffect(() => {
     if (series && overviewRef.current) {
@@ -405,6 +431,79 @@ export default function SeriesDetailsPage() {
                   </svg>
                 </button>
               </div>
+            </div>
+          )}
+
+          {series.seasons && series.seasons.length > 0 && (
+            <div className="px-6 lg:px-12 pb-12 max-w-7xl mx-auto">
+              <h3 className="text-white text-2xl font-semibold mb-6">Episodes</h3>
+              
+              <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+                {series.seasons
+                  .filter(s => s.season_number > 0)
+                  .map((season) => (
+                    <button
+                      key={season.id}
+                      onClick={() => setSelectedSeason(season.season_number)}
+                      className={`flex-shrink-0 px-4 py-2 rounded-lg font-medium transition-colors ${
+                        selectedSeason === season.season_number
+                          ? "bg-red-600 text-white"
+                          : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                      }`}
+                    >
+                      {season.name}
+                    </button>
+                  ))}
+              </div>
+
+              {loadingEpisodes ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-8 h-8 border-3 border-red-600 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {seasonEpisodes.map((episode) => (
+                    <div
+                      key={episode.id}
+                      className="flex gap-4 bg-gray-800/50 rounded-xl p-4 border border-gray-700/30 hover:border-red-500/50 transition-all"
+                    >
+                      <div className="flex-shrink-0 w-32 h-20 relative rounded-lg overflow-hidden">
+                        {episode.still_path ? (
+                          <Image
+                            src={getImageUrl(episode.still_path, IMAGE_SIZES.backdrop.small) || ""}
+                            alt={episode.name || ""}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                            <svg className="w-8 h-8 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-1">
+                          <span className="text-gray-400 text-sm">E{episode.episode_number}</span>
+                          <h4 className="text-white font-semibold truncate">{episode.name}</h4>
+                        </div>
+                        
+                        {episode.overview && (
+                          <p className="text-gray-400 text-sm line-clamp-2 mb-2">{episode.overview}</p>
+                        )}
+                        
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span>{episode.air_date}</span>
+                          {episode.runtime && <span>{episode.runtime} min</span>}
+                          <span className="text-yellow-400 font-medium">★ {episode.vote_average?.toFixed(1)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

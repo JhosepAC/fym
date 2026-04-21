@@ -16,4 +16,6 @@ export {
   type WatchProvider,
   type WatchProvidersResponse,
   type CountryProviders,
+  type TvSeason,
+  type TvEpisode,
 } from "./client";

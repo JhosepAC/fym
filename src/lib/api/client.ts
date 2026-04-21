@@ -94,6 +94,10 @@ class ApiClient {
     return this.fetch<CreditsResponse>(ENDPOINTS.tv.credits(id));
   }
 
+  async getTvSeasonDetails(id: number, seasonNumber: number) {
+    return this.fetch<TvSeason>(ENDPOINTS.tv.seasonDetails(id, seasonNumber));
+  }
+
   async getMovieVideos(id: number) {
     return this.fetch<VideosResponse>(ENDPOINTS.movie.videos(id));
   }
@@ -191,6 +195,28 @@ export interface TvShowDetail extends MediaItem {
     poster_path: string | null;
     air_date: string;
   }[];
+}
+
+export interface TvSeason {
+  id: number;
+  name: string;
+  overview: string | null;
+  season_number: number;
+  air_date: string;
+  episodes: TvEpisode[];
+}
+
+export interface TvEpisode {
+  id: number;
+  name: string;
+  overview: string | null;
+  episode_number: number;
+  season_number: number;
+  runtime: number | null;
+  vote_average: number;
+  vote_count: number;
+  still_path: string | null;
+  air_date: string;
 }
 
 export interface Video {
