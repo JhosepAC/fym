@@ -64,7 +64,7 @@ export default function MovieRow({ title, items, autoScrollInterval = 5000 }: Mo
   if (items.length === 0) return null;
 
   return (
-    <section className="relative group">
+    <section className="relative group py-2">
       <h2 className="text-xl font-semibold text-white mb-4 px-8">{title}</h2>
       
       <div
@@ -74,22 +74,22 @@ export default function MovieRow({ title, items, autoScrollInterval = 5000 }: Mo
       >
         <button
           onClick={() => scroll("left")}
-          className={`absolute left-0 top-0 bottom-12 z-20 w-12 bg-black/70 hover:bg-black/90 flex items-center justify-center transition-all ${
+          className={`absolute left-0 top-0 bottom-0 z-20 w-8 md:w-12 bg-gradient-to-r from-black/80 to-transparent flex items-center justify-center transition-all duration-300 ${
             canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
         >
-          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
 
         <button
           onClick={() => scroll("right")}
-          className={`absolute right-0 top-0 bottom-12 z-20 w-12 bg-black/70 hover:bg-black/90 flex items-center justify-center transition-all ${
+          className={`absolute right-0 top-0 bottom-0 z-20 w-8 md:w-12 bg-gradient-to-l from-black/80 to-transparent flex items-center justify-center transition-all duration-300 ${
             canScrollRight ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
         >
-          <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>
