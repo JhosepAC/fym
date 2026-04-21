@@ -66,6 +66,10 @@ class ApiClient {
     return this.fetch<ApiResponse>(ENDPOINTS.tv.topRated, { page: String(page) });
   }
 
+  async getTvOnTheAir(page: number = 1) {
+    return this.fetch<ApiResponse>(ENDPOINTS.tv.onTheAir, { page: String(page) });
+  }
+
   async getTvDetails(id: number) {
     return this.fetch<TvShowDetail>(ENDPOINTS.tv.details(id));
   }

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="130 160 140 240">
+    <g id="human-figure">
+        <circle cx="200" cy="210" r="50" fill="#fff"/>
+
+        <rect x="150" y="260" width="100" height="140" rx="5" fill="#fff"/>
+    </g>
+
+    <g id="3d-glasses" transform="translate(132, 175) scale(0.68)">
+        <path d="M5 35 H85 C95 35 100 55 100 55 C100 55 105 35 115 35 H195 V70 L185 80 H115 L100 65 L85 80 H15 L5 70 Z" fill="#F3F4F6"/>
+
+        <rect x="20" y="45" width="60" height="25" rx="3" fill="#00ADEF"/>
+
+        <rect x="120" y="45" width="60" height="25" rx="3" fill="#ED1C24"/>
+    </g>
+</svg>
