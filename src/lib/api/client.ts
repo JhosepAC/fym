@@ -58,6 +58,10 @@ class ApiClient {
     return this.fetch<ApiResponse>(ENDPOINTS.movie.similar(id), { page: String(page) });
   }
 
+  async getMovieRecommendations(id: number, page: number = 1) {
+    return this.fetch<ApiResponse>(ENDPOINTS.movie.recommendations(id), { page: String(page) });
+  }
+
   async getTvPopular(page: number = 1) {
     return this.fetch<ApiResponse>(ENDPOINTS.tv.popular, { page: String(page) });
   }

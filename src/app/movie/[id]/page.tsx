@@ -13,7 +13,7 @@ export default function MovieDetailsPage() {
   const router = useRouter();
   const [movie, setMovie] = useState<MovieDetail | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
-  const [similarMovies, setSimilarMovies] = useState<MediaItem[]>([]);
+  const [recommendations, setRecommendations] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFullOverview, setShowFullOverview] = useState(false);
@@ -34,14 +34,14 @@ export default function MovieDetailsPage() {
 
       try {
         setLoading(true);
-        const [movieData, videosData, similarData] = await Promise.all([
+        const [movieData, videosData, recommendationsData] = await Promise.all([
           apiClient.getMovieDetails(movieId),
           apiClient.getMovieVideos(movieId),
-          apiClient.getMovieSimilar(movieId),
+          apiClient.getMovieRecommendations(movieId),
         ]);
         setMovie(movieData);
         setVideos(videosData.results || []);
-        setSimilarMovies(similarData.results || []);
+        setRecommendations(recommendationsData.results || []);
       } catch (err) {
         setError("Failed to load movie details");
       } finally {
@@ -366,22 +366,22 @@ export default function MovieDetailsPage() {
               </div>
             </div>
 
-            {similarMovies.length > 0 && (
+            {recommendations.length > 0 && (
               <div className="mt-16">
-                <h3 className="text-white text-2xl font-semibold mb-6">Similar Movies</h3>
+                <h3 className="text-white text-2xl font-semibold mb-6">Recommended Movies</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {similarMovies.slice(0, 10).map((similar) => (
+                  {recommendations.slice(0, 10).map((rec) => (
                     <Link
-                      key={similar.id}
-                      href={`/movie/${similar.id}`}
+                      key={rec.id}
+                      href={`/movie/${rec.id}`}
                       className="group"
                     >
                       <div className="bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/30 hover:border-red-500/50 transition-all duration-300 hover:scale-105">
-                        {similar.poster_path ? (
+                        {rec.poster_path ? (
                           <div className="relative aspect-[2/3]">
                             <Image
-                              src={getImageUrl(similar.poster_path, IMAGE_SIZES.poster.medium) || ""}
-                              alt={similar.title || ""}
+                              src={getImageUrl(rec.poster_path, IMAGE_SIZES.poster.medium) || ""}
+                              alt={rec.title || ""}
                               fill
                               className="object-cover"
                             />
@@ -391,10 +391,10 @@ export default function MovieDetailsPage() {
                         )}
                         <div className="p-3">
                           <p className="text-white text-sm font-medium truncate group-hover:text-red-400 transition-colors">
-                            {similar.title}
+                            {rec.title}
                           </p>
                           <p className="text-gray-500 text-xs">
-                            {similar.vote_average?.toFixed(1)} ★
+                            {rec.vote_average?.toFixed(1)} ★
                           </p>
                         </div>
                       </div>
@@ -405,6 +405,44 @@ export default function MovieDetailsPage() {
             )}
           </div>
         </div>
+
+        {recommendations.length > 0 && (
+          <div className="mt-16 px-6 lg:px-12 pb-12 max-w-7xl mx-auto">
+            <h3 className="text-white text-2xl font-semibold mb-6">Recommended Movies</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {recommendations.slice(0, 10).map((rec) => (
+                <Link
+                  key={rec.id}
+                  href={`/movie/${rec.id}`}
+                  className="group"
+                >
+                  <div className="bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/30 hover:border-red-500/50 transition-all duration-300 hover:scale-105">
+                    {rec.poster_path ? (
+                      <div className="relative aspect-[2/3]">
+                        <Image
+                          src={getImageUrl(rec.poster_path, IMAGE_SIZES.poster.medium) || ""}
+                          alt={rec.title || ""}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="aspect-[2/3] bg-gray-800" />
+                    )}
+                    <div className="p-3">
+                      <p className="text-white text-sm font-medium truncate group-hover:text-red-400 transition-colors">
+                        {rec.title}
+                      </p>
+                      <p className="text-gray-500 text-xs">
+                        {rec.vote_average?.toFixed(1)} ★
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {showPosterModal && posterUrl && (

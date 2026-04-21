@@ -36,6 +36,7 @@ export const ENDPOINTS = {
     nowPlaying: "/movie/now_playing",
     details: (id: number) => `/movie/${id}`,
     similar: (id: number) => `/movie/${id}/similar`,
+    recommendations: (id: number) => `/movie/${id}/recommendations`,
     videos: (id: number) => `/movie/${id}/videos`,
   },
   tv: {
