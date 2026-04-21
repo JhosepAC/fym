@@ -17,7 +17,9 @@ export default function SeriesDetailsPage() {
   const [cast, setCast] = useState<Cast[]>([]);
   const [crew, setCrew] = useState<Crew[]>([]);
   const [watchProviders, setWatchProviders] = useState<WatchProvider[]>([]);
-  const [allSeasonsData, setAllSeasonsData] = useState<Record<number, TvEpisode[]>>({});
+  const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
+  const [seasonEpisodes, setSeasonEpisodes] = useState<TvEpisode[]>([]);
+  const [loadingEpisodes, setLoadingEpisodes] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFullOverview, setShowFullOverview] = useState(false);
@@ -52,6 +54,11 @@ export default function SeriesDetailsPage() {
         setCast(creditsData.cast || []);
         setCrew(creditsData.crew || []);
         
+        const firstSeason = seriesData.seasons?.find(s => s.season_number > 0);
+        if (firstSeason) {
+          setSelectedSeason(firstSeason.season_number);
+        }
+        
         const countryCode = "PE";
         const providers = watchProvidersData.results?.[countryCode];
         if (providers) {
@@ -68,28 +75,22 @@ export default function SeriesDetailsPage() {
   }, [seriesId]);
 
   useEffect(() => {
-    async function fetchAllSeasons() {
-      if (!series?.seasons) return;
+    async function fetchSeasonEpisodes() {
+      if (!series || !selectedSeason) return;
       
-      const validSeasons = series.seasons.filter(s => s.season_number > 0);
-      const seasonsToFetch = validSeasons.slice(0, 8);
-      
-      const allData: Record<number, TvEpisode[]> = {};
-      
-      for (const season of seasonsToFetch) {
-        try {
-          const seasonData = await apiClient.getTvSeasonDetails(seriesId, season.season_number);
-          allData[season.season_number] = seasonData.episodes || [];
-        } catch (err) {
-          console.error(`Failed to load season ${season.season_number}`);
-        }
+      try {
+        setLoadingEpisodes(true);
+        const seasonData = await apiClient.getTvSeasonDetails(seriesId, selectedSeason);
+        setSeasonEpisodes(seasonData.episodes || []);
+      } catch (err) {
+        console.error("Failed to load episodes");
+      } finally {
+        setLoadingEpisodes(false);
       }
-      
-      setAllSeasonsData(allData);
     }
 
-    fetchAllSeasons();
-  }, [series, seriesId]);
+    fetchSeasonEpisodes();
+  }, [seriesId, selectedSeason]);
 
   useEffect(() => {
     if (series && overviewRef.current) {
@@ -433,74 +434,97 @@ export default function SeriesDetailsPage() {
             </div>
           )}
 
-          {Object.keys(allSeasonsData).length > 0 && (
+          {series.seasons && series.seasons.length > 0 && (
             <div className="px-6 lg:px-12 pb-12 max-w-7xl mx-auto">
               <h3 className="text-white text-2xl font-semibold mb-6">Episodes</h3>
               
-              <div className="overflow-x-auto">
-                <div className="min-w-[600px]">
-                  <div className="grid gap-2" style={{ gridTemplateColumns: `60px repeat(${Math.min(Object.keys(allSeasonsData).length, 8)}, 1fr)` }}>
-                    <div className="sticky left-0 bg-[#0a0a0b]" />
-                    {Object.keys(allSeasonsData)
-                      .sort((a, b) => Number(a) - Number(b))
-                      .slice(0, 8)
-                      .map(seasonNum => (
-                        <div key={seasonNum} className="text-center text-gray-400 text-sm font-medium">
-                          S{seasonNum}
-                        </div>
-                      ))}
-                    
-                    {Array.from({ length: 20 }).map((_, episodeIndex) => {
-                      const episodeNum = episodeIndex + 1;
-                      return (
-                        <>
-                          <div className="sticky left-0 bg-[#0a0a0b] text-gray-500 text-sm text-right pr-2">
-                            E{episodeNum}
+              <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
+                {series.seasons
+                  .filter(s => s.season_number > 0)
+                  .map((season, idx) => (
+                    <button
+                      key={season.id}
+                      onClick={() => setSelectedSeason(season.season_number)}
+                      className={`flex-shrink-0 px-6 py-3 rounded-xl font-bold transition-all duration-300 ${
+                        selectedSeason === season.season_number
+                          ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg shadow-red-600/30 scale-105"
+                          : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10"
+                      }`}
+                    >
+                      <span className="text-xs opacity-70 block">{idx === 0 ? "First" : `Season ${season.season_number}`}</span>
+                      <span>{season.name}</span>
+                    </button>
+                  ))}
+              </div>
+
+              {loadingEpisodes ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {seasonEpisodes.map((episode) => (
+                    <div
+                      key={episode.id}
+                      className="group relative bg-gradient-to-br from-gray-900 via-gray-800/80 to-gray-900 rounded-2xl overflow-hidden border border-white/5 hover:border-yellow-400/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-yellow-400/10"
+                    >
+                      <div className="flex">
+                        <div className="flex-shrink-0 w-40 h-28 relative">
+                          {episode.still_path ? (
+                            <Image
+                              src={getImageUrl(episode.still_path, IMAGE_SIZES.backdrop.medium) || ""}
+                              alt={episode.name || ""}
+                              fill
+                              className="object-cover transition-transform duration-700 group-hover:scale-110"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                              <svg className="w-12 h-12 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            </div>
+                          )}
+                          <div className="absolute top-2 left-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-lg">
+                            <span className="text-white font-bold text-sm">E{episode.episode_number}</span>
                           </div>
-                          {Object.keys(allSeasonsData)
-                            .sort((a, b) => Number(a) - Number(b))
-                            .slice(0, 8)
-                            .map(seasonNum => {
-                              const episode = allSeasonsData[Number(seasonNum)]?.find(e => e.episode_number === episodeNum);
-                              const rating = episode?.vote_average || 0;
-                              const opacity = rating > 0 ? Math.min(rating / 10, 1) : 0;
-                              
-                              return (
-                                <div
-                                  key={`${seasonNum}-${episodeNum}`}
-                                  className="aspect-square rounded-lg flex items-center justify-center text-xs font-bold cursor-pointer transition-transform hover:scale-110"
-                                  style={{
-                                    backgroundColor: rating > 0 ? `rgba(250, 204, 21, ${opacity})` : 'rgba(55, 65, 81, 0.5)',
-                                    color: rating >= 6 ? '#000' : '#fff',
-                                  }}
-                                  title={episode ? `${episode.name} - ★ ${rating.toFixed(1)}` : `Episode ${episodeNum} not available`}
-                                >
-                                  {rating > 0 ? rating.toFixed(1) : ''}
-                                </div>
-                              );
-                            })}
-                        </>
-                      );
-                    })}
-                  </div>
+                          <div className="absolute top-2 right-2 bg-yellow-500/90 backdrop-blur-sm px-2 py-1 rounded-lg">
+                            <span className="text-black font-bold text-sm">★ {episode.vote_average?.toFixed(1)}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex-1 p-4 flex flex-col justify-center">
+                          <h4 className="text-white font-semibold text-lg leading-tight mb-2 line-clamp-2 group-hover:text-yellow-400 transition-colors">
+                            {episode.name}
+                          </h4>
+                          
+                          <div className="flex items-center gap-3 text-xs text-gray-500">
+                            <span className="flex items-center gap-1">
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              {episode.air_date?.split("-")[0]}
+                            </span>
+                            {episode.runtime && (
+                              <span className="flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {episode.runtime} min
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {episode.overview && (
+                        <div className="px-4 pb-4">
+                          <p className="text-gray-400 text-sm line-clamp-2">{episode.overview}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              </div>
-              
-              <div className="mt-6 flex items-center gap-4 text-sm text-gray-400">
-                <span>Rating:</span>
-                <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(250, 204, 21, 0.3)' }} />
-                  <span>Low</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(250, 204, 21, 0.6)' }} />
-                  <span>Medium</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: 'rgba(250, 204, 21, 1)' }} />
-                  <span>High</span>
-                </div>
-              </div>
+              )}
             </div>
           )}
 
