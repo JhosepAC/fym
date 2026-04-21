@@ -36,6 +36,10 @@ export const ENDPOINTS = {
     nowPlaying: "/movie/now_playing",
     details: (id: number) => `/movie/${id}`,
     similar: (id: number) => `/movie/${id}/similar`,
+    recommendations: (id: number) => `/movie/${id}/recommendations`,
+    credits: (id: number) => `/movie/${id}/credits`,
+    watchProviders: (id: number) => `/movie/${id}/watch/providers`,
+    videos: (id: number) => `/movie/${id}/videos`,
   },
   tv: {
     popular: "/tv/popular",
@@ -43,10 +47,14 @@ export const ENDPOINTS = {
     onTheAir: "/tv/on_the_air",
     details: (id: number) => `/tv/${id}`,
     similar: (id: number) => `/tv/${id}/similar`,
+    videos: (id: number) => `/tv/${id}/videos`,
   },
   search: {
     multi: "/search/multi",
     movie: "/search/movie",
     tv: "/search/tv",
+  },
+  collection: {
+    details: (id: number) => `/collection/${id}`,
   },
 } as const;
