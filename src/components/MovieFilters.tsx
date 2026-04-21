@@ -11,6 +11,8 @@ export interface FilterState {
 
 interface MovieFiltersProps {
   onFilterChange: (filters: FilterState) => void;
+  title?: string;
+  mediaType?: "movie" | "tv";
 }
 
 const GENRES = [
@@ -33,6 +35,14 @@ const GENRES = [
   { id: 53, name: "Thriller" },
   { id: 10752, name: "War" },
   { id: 37, name: "Western" },
+  { id: 10759, name: "Action & Adventure" },
+  { id: 10762, name: "Kids" },
+  { id: 10763, name: "News" },
+  { id: 10764, name: "Reality" },
+  { id: 10765, name: "Sci-Fi & Fantasy" },
+  { id: 10766, name: "Soap" },
+  { id: 10767, name: "Talk" },
+  { id: 10768, name: "War & Politics" },
 ];
 
 const SORT_OPTIONS = [
@@ -49,7 +59,8 @@ const YEARS = Array.from({ length: 50 }, (_, i) => String(currentYear - i));
 
 const RATINGS = [9, 8, 7, 6, 5];
 
-export default function MovieFilters({ onFilterChange }: MovieFiltersProps) {
+export default function MovieFilters({ onFilterChange, title = "Filters", mediaType = "movie" }: MovieFiltersProps) {
+  const yearLabel = mediaType === "tv" ? "First Air Date" : "Release Year";
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     genre: null,
@@ -154,7 +165,7 @@ export default function MovieFilters({ onFilterChange }: MovieFiltersProps) {
 
             <div>
               <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
-                Release Year
+                {yearLabel}
               </label>
               <div className="relative">
                 <select

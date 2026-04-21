@@ -10,16 +10,16 @@ interface ApiResponse {
   results: MediaItem[];
 }
 
-interface MoviesClientProps {
+interface SeriesClientProps {
   initialData: {
     trending: ApiResponse;
     popular: ApiResponse;
     topRated: ApiResponse;
-    upcoming: ApiResponse;
+    onTheAir: ApiResponse;
   };
 }
 
-export default function MoviesClient({ initialData }: MoviesClientProps) {
+export default function SeriesClient({ initialData }: SeriesClientProps) {
   const [filters, setFilters] = useState<FilterState>({
     genre: null,
     year: "",
@@ -39,13 +39,13 @@ export default function MoviesClient({ initialData }: MoviesClientProps) {
         <header className="mb-8">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div>
-              <h1 className="text-4xl md:text-5xl font-black text-white mb-2">Movies</h1>
+              <h1 className="text-4xl md:text-5xl font-black text-white mb-2">Series</h1>
               <p className="text-gray-400 text-lg">
-                Discover the latest films, from action blockbusters to indie gems.
+                Discover the best TV shows, from popular hits to critically acclaimed.
               </p>
             </div>
             <div className="flex-shrink-0">
-              <MovieFilters onFilterChange={handleFilterChange} mediaType="movie" />
+              <MovieFilters onFilterChange={handleFilterChange} mediaType="tv" />
             </div>
           </div>
         </header>
@@ -55,7 +55,7 @@ export default function MoviesClient({ initialData }: MoviesClientProps) {
             { title: "Trending This Week", items: initialData.trending.results },
             { title: "Popular", items: initialData.popular.results },
             { title: "Top Rated", items: initialData.topRated.results },
-            { title: "Coming Soon", items: initialData.upcoming.results },
+            { title: "On TV Now", items: initialData.onTheAir.results },
           ]}
           filters={filters}
         />
