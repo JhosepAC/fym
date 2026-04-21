@@ -51,4 +51,7 @@ export const ENDPOINTS = {
     movie: "/search/movie",
     tv: "/search/tv",
   },
+  collection: {
+    details: (id: number) => `/collection/${id}`,
+  },
 } as const;

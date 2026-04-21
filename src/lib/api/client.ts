@@ -82,6 +82,10 @@ class ApiClient {
     return this.fetch<VideosResponse>(ENDPOINTS.tv.videos(id));
   }
 
+  async getCollectionDetails(id: number) {
+    return this.fetch<Collection>(ENDPOINTS.collection.details(id));
+  }
+
   async searchMulti(query: string, page: number = 1) {
     return this.fetch<ApiResponse>(ENDPOINTS.search.multi, {
       query,
@@ -178,6 +182,25 @@ export interface Video {
 export interface VideosResponse {
   id: number;
   results: Video[];
+}
+
+export interface Collection {
+  id: number;
+  name: string;
+  overview: string | null;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  parts: CollectionPart[];
+}
+
+export interface CollectionPart {
+  id: number;
+  title: string;
+  original_title: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  release_date: string;
+  vote_average: number;
 }
 
 export const getImageUrl = (path: string | null | undefined, size: string = "w500"): string | null => {

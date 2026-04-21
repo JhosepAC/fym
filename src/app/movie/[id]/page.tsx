@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import { apiClient, getImageUrl, IMAGE_SIZES, TMDB_CONFIG } from "@/lib/api";
@@ -192,10 +193,13 @@ export default function MovieDetailsPage() {
               </div>
 
               {movie.belongs_to_collection && (
-                <div className="mt-6 p-4 bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-sm rounded-xl border border-gray-700/50">
+                <Link
+                  href={`/collection/${movie.belongs_to_collection.id}`}
+                  className="mt-6 p-4 bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-sm rounded-xl border border-gray-700/50 hover:border-red-500/50 transition-colors block"
+                >
                   <p className="text-gray-400 text-xs uppercase tracking-wider mb-2">Part of</p>
-                  <p className="text-white font-semibold">{movie.belongs_to_collection.name}</p>
-                </div>
+                  <p className="text-white font-semibold hover:text-red-400 transition-colors">{movie.belongs_to_collection.name}</p>
+                </Link>
               )}
             </div>
 

@@ -8,4 +8,6 @@ export {
   type TvShowDetail,
   type Video,
   type VideosResponse,
+  type Collection,
+  type CollectionPart,
 } from "./client";
