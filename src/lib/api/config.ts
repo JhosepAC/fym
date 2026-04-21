@@ -38,6 +38,7 @@ export const ENDPOINTS = {
     similar: (id: number) => `/movie/${id}/similar`,
     recommendations: (id: number) => `/movie/${id}/recommendations`,
     credits: (id: number) => `/movie/${id}/credits`,
+    watchProviders: (id: number) => `/movie/${id}/watch/providers`,
     videos: (id: number) => `/movie/${id}/videos`,
   },
   tv: {

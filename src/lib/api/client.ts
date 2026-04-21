@@ -66,6 +66,10 @@ class ApiClient {
     return this.fetch<CreditsResponse>(ENDPOINTS.movie.credits(id));
   }
 
+  async getMovieWatchProviders(id: number) {
+    return this.fetch<WatchProvidersResponse>(ENDPOINTS.movie.watchProviders(id));
+  }
+
   async getTvPopular(page: number = 1) {
     return this.fetch<ApiResponse>(ENDPOINTS.tv.popular, { page: String(page) });
   }
@@ -233,6 +237,25 @@ export interface CollectionPart {
   backdrop_path: string | null;
   release_date: string;
   vote_average: number;
+}
+
+export interface WatchProvider {
+  provider_id: number;
+  provider_name: string;
+  logo_path: string | null;
+  display_priority: number;
+}
+
+export interface CountryProviders {
+  link: string;
+  flatrate?: WatchProvider[];
+  rent?: WatchProvider[];
+  buy?: WatchProvider[];
+}
+
+export interface WatchProvidersResponse {
+  id: number;
+  results: Record<string, CountryProviders>;
 }
 
 export const getImageUrl = (path: string | null | undefined, size: string = "w500"): string | null => {

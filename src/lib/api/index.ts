@@ -13,4 +13,7 @@ export {
   type CreditsResponse,
   type Cast,
   type Crew,
+  type WatchProvider,
+  type WatchProvidersResponse,
+  type CountryProviders,
 } from "./client";

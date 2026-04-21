@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import { apiClient, getImageUrl, IMAGE_SIZES, TMDB_CONFIG } from "@/lib/api";
-import { MovieDetail, Video, MediaItem, Cast, Crew } from "@/lib/api/client";
+import { MovieDetail, Video, MediaItem, Cast, Crew, WatchProvider } from "@/lib/api/client";
 
 export default function MovieDetailsPage() {
   const params = useParams();
@@ -16,6 +16,8 @@ export default function MovieDetailsPage() {
   const [recommendations, setRecommendations] = useState<MediaItem[]>([]);
   const [cast, setCast] = useState<Cast[]>([]);
   const [crew, setCrew] = useState<Crew[]>([]);
+  const [watchProviders, setWatchProviders] = useState<WatchProvider[]>([]);
+  const [externalLink, setExternalLink] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFullOverview, setShowFullOverview] = useState(false);
@@ -37,17 +39,25 @@ export default function MovieDetailsPage() {
 
       try {
         setLoading(true);
-        const [movieData, videosData, recommendationsData, creditsData] = await Promise.all([
+        const [movieData, videosData, recommendationsData, creditsData, watchProvidersData] = await Promise.all([
           apiClient.getMovieDetails(movieId),
           apiClient.getMovieVideos(movieId),
           apiClient.getMovieRecommendations(movieId),
           apiClient.getMovieCredits(movieId),
+          apiClient.getMovieWatchProviders(movieId),
         ]);
         setMovie(movieData);
         setVideos(videosData.results || []);
         setRecommendations(recommendationsData.results || []);
         setCast(creditsData.cast || []);
         setCrew(creditsData.crew || []);
+        
+        const countryCode = "PE";
+        const providers = watchProvidersData.results?.[countryCode];
+        if (providers) {
+          setWatchProviders(providers.flatrate || []);
+          setExternalLink(providers.link || null);
+        }
       } catch (err) {
         setError("Failed to load movie details");
       } finally {
@@ -75,6 +85,21 @@ export default function MovieDetailsPage() {
     (v) => v.type === "Trailer" && v.site === "YouTube"
   );
   const trailerUrl = trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null;
+
+  const getProviderLink = (providerName: string) => {
+    const searchQuery = encodeURIComponent(movie?.title || "");
+    const links: Record<string, string> = {
+      "Netflix": `https://www.netflix.com/search?q=${searchQuery}`,
+      "Disney Plus": `https://www.disneyplus.com/search?q=${searchQuery}`,
+      "HBO Max": `https://www.max.com/search?q=${searchQuery}`,
+      "Amazon Prime Video": `https://www.primevideo.com/search?q=${searchQuery}`,
+      "Apple TV+": `https://tv.apple.com/us/search?q=${searchQuery}`,
+      "Hulu": `https://www.hulu.com/search?q=${searchQuery}`,
+      "Peacock": `https://www.peacocktv.com/search?q=${searchQuery}`,
+      "Paramount+": `https://www.paramountplus.com/search?q=${searchQuery}`,
+    };
+    return links[providerName] || "#";
+  };
 
   if (loading) {
     return (
@@ -370,6 +395,36 @@ export default function MovieDetailsPage() {
                   </button>
                 )}
               </div>
+
+              {watchProviders.length > 0 && (
+                <div className="mt-10">
+                  <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-4">Watch On</h3>
+                  <div className="flex flex-wrap items-center gap-4">
+                    {watchProviders.slice(0, 6).map((provider, idx) => (
+                      <a
+                        key={`${provider.provider_id}-${idx}`}
+                        href={getProviderLink(provider.provider_name)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group relative"
+                        title={`Watch on ${provider.provider_name}`}
+                      >
+                        {provider.logo_path ? (
+                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-800 border border-gray-700 hover:border-red-500 transition-all duration-300">
+                            <Image
+                              src={`${TMDB_CONFIG.IMAGE_BASE_URL}/w92${provider.logo_path}`}
+                              alt={provider.provider_name}
+                              width={40}
+                              height={40}
+                              className="object-contain w-full h-full"
+                            />
+                          </div>
+                        ) : null}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             </div>
@@ -441,8 +496,8 @@ export default function MovieDetailsPage() {
             {crew
               .filter((member) => ["Director", "Screenplay", "Writer", "Producer", "Executive Producer", "Original Story"].includes(member.job))
               .slice(0, 5)
-              .map((member) => (
-                <div key={member.id} className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/30 hover:border-red-500/50 transition-all duration-300">
+              .map((member, idx) => (
+                <div key={`${member.id}-${member.job}-${idx}`} className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/30 hover:border-red-500/50 transition-all duration-300">
                   {member.profile_path ? (
                     <div className="relative w-16 h-16 mb-3 mx-auto">
                       <Image
