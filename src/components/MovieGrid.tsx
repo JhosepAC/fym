@@ -101,7 +101,7 @@ function MovieCard({ item }: { item: MediaItem }) {
   const overview = item.overview || "No description available.";
 
   const handleClick = () => {
-    const type = item.media_type === "tv" ? "tv" : "movie";
+    const type = item.media_type === "tv" || item.first_air_date ? "series" : "movie";
     router.push(`/${type}/${item.id}`);
   };
 

@@ -47,6 +47,8 @@ export const ENDPOINTS = {
     onTheAir: "/tv/on_the_air",
     details: (id: number) => `/tv/${id}`,
     similar: (id: number) => `/tv/${id}/similar`,
+    recommendations: (id: number) => `/tv/${id}/recommendations`,
+    credits: (id: number) => `/tv/${id}/credits`,
     videos: (id: number) => `/tv/${id}/videos`,
   },
   search: {

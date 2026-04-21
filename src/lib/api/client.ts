@@ -86,6 +86,14 @@ class ApiClient {
     return this.fetch<TvShowDetail>(ENDPOINTS.tv.details(id));
   }
 
+  async getTvRecommendations(id: number, page: number = 1) {
+    return this.fetch<ApiResponse>(ENDPOINTS.tv.recommendations(id), { page: String(page) });
+  }
+
+  async getTvCredits(id: number) {
+    return this.fetch<CreditsResponse>(ENDPOINTS.tv.credits(id));
+  }
+
   async getMovieVideos(id: number) {
     return this.fetch<VideosResponse>(ENDPOINTS.movie.videos(id));
   }
@@ -173,6 +181,8 @@ export interface TvShowDetail extends MediaItem {
   episode_run_time: number[];
   genres: { id: number; name: string }[];
   tagline: string;
+  status: string;
+  first_air_date: string;
   seasons: {
     id: number;
     name: string;
