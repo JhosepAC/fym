@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import { apiClient, getImageUrl, IMAGE_SIZES, TMDB_CONFIG } from "@/lib/api";
-import { MovieDetail, Video, MediaItem } from "@/lib/api/client";
+import { MovieDetail, Video, MediaItem, Cast, Crew } from "@/lib/api/client";
 
 export default function MovieDetailsPage() {
   const params = useParams();
@@ -14,6 +14,8 @@ export default function MovieDetailsPage() {
   const [movie, setMovie] = useState<MovieDetail | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [recommendations, setRecommendations] = useState<MediaItem[]>([]);
+  const [cast, setCast] = useState<Cast[]>([]);
+  const [crew, setCrew] = useState<Crew[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFullOverview, setShowFullOverview] = useState(false);
@@ -34,14 +36,17 @@ export default function MovieDetailsPage() {
 
       try {
         setLoading(true);
-        const [movieData, videosData, recommendationsData] = await Promise.all([
+        const [movieData, videosData, recommendationsData, creditsData] = await Promise.all([
           apiClient.getMovieDetails(movieId),
           apiClient.getMovieVideos(movieId),
           apiClient.getMovieRecommendations(movieId),
+          apiClient.getMovieCredits(movieId),
         ]);
         setMovie(movieData);
         setVideos(videosData.results || []);
         setRecommendations(recommendationsData.results || []);
+        setCast(creditsData.cast || []);
+        setCrew(creditsData.crew || []);
       } catch (err) {
         setError("Failed to load movie details");
       } finally {
@@ -369,6 +374,40 @@ export default function MovieDetailsPage() {
             </div>
         </div>
       </div>
+
+      {cast.length > 0 && (
+        <div className="px-6 lg:px-12 pb-12 max-w-7xl mx-auto">
+          <h3 className="text-white text-2xl font-semibold mb-6">Cast</h3>
+          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+            {cast.slice(0, 10).map((actor) => (
+              <div key={actor.id} className="flex-shrink-0 w-32">
+                <div className="bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/30">
+                  {actor.profile_path ? (
+                    <div className="relative w-32 h-40">
+                      <Image
+                        src={getImageUrl(actor.profile_path, IMAGE_SIZES.profile.medium) || ""}
+                        alt={actor.name || ""}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-32 h-40 bg-gray-800 flex items-center justify-center">
+                      <svg className="w-12 h-12 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="p-3">
+                    <p className="text-white text-sm font-medium truncate">{actor.name}</p>
+                    <p className="text-gray-500 text-xs truncate">{actor.character}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {recommendations.length > 0 && (
         <div className="px-6 lg:px-12 pb-12 max-w-7xl mx-auto">

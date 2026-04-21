@@ -10,4 +10,7 @@ export {
   type VideosResponse,
   type Collection,
   type CollectionPart,
+  type CreditsResponse,
+  type Cast,
+  type Crew,
 } from "./client";

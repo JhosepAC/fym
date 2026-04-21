@@ -62,6 +62,10 @@ class ApiClient {
     return this.fetch<ApiResponse>(ENDPOINTS.movie.recommendations(id), { page: String(page) });
   }
 
+  async getMovieCredits(id: number) {
+    return this.fetch<CreditsResponse>(ENDPOINTS.movie.credits(id));
+  }
+
   async getTvPopular(page: number = 1) {
     return this.fetch<ApiResponse>(ENDPOINTS.tv.popular, { page: String(page) });
   }
@@ -186,6 +190,30 @@ export interface Video {
 export interface VideosResponse {
   id: number;
   results: Video[];
+}
+
+export interface Cast {
+  id: number;
+  name: string;
+  original_name: string;
+  character: string;
+  profile_path: string | null;
+  order: number;
+}
+
+export interface Crew {
+  id: number;
+  name: string;
+  original_name: string;
+  job: string;
+  department: string;
+  profile_path: string | null;
+}
+
+export interface CreditsResponse {
+  id: number;
+  cast: Cast[];
+  crew: Crew[];
 }
 
 export interface Collection {
