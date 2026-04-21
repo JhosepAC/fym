@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import { apiClient, getImageUrl, IMAGE_SIZES, TMDB_CONFIG } from "@/lib/api";
-import { TvShowDetail, Video, MediaItem, Cast, Crew, WatchProvider, TvSeason, TvEpisode } from "@/lib/api/client";
+import { TvShowDetail, Video, MediaItem, Cast, Crew, WatchProvider, TvSeason, TvEpisode, SeasonCast, SeasonCrew } from "@/lib/api/client";
 
 export default function SeriesDetailsPage() {
   const params = useParams();
@@ -22,6 +22,9 @@ export default function SeriesDetailsPage() {
   const [loadingEpisodes, setLoadingEpisodes] = useState(false);
   const [selectedEpisode, setSelectedEpisode] = useState<TvEpisode | null>(null);
   const [seasonDetails, setSeasonDetails] = useState<TvSeason | null>(null);
+  const [seasonCast, setSeasonCast] = useState<SeasonCast[]>([]);
+  const [seasonCrew, setSeasonCrew] = useState<SeasonCrew[]>([]);
+  const [showSeasonModal, setShowSeasonModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFullOverview, setShowFullOverview] = useState(false);
@@ -83,10 +86,15 @@ export default function SeriesDetailsPage() {
       
       try {
         setLoadingEpisodes(true);
-        const seasonData = await apiClient.getTvSeasonDetails(seriesId, selectedSeason);
+        const [seasonData, aggregateCredits] = await Promise.all([
+          apiClient.getTvSeasonDetails(seriesId, selectedSeason),
+          apiClient.getTvSeasonAggregateCredits(seriesId, selectedSeason),
+        ]);
         setSeasonDetails(seasonData);
         setSeasonEpisodes(seasonData.episodes || []);
         setSelectedEpisode(seasonData.episodes?.[0] || null);
+        setSeasonCast(aggregateCredits.cast || []);
+        setSeasonCrew(aggregateCredits.crew || []);
       } catch (err) {
         console.error("Failed to load episodes");
       } finally {
@@ -528,6 +536,15 @@ export default function SeriesDetailsPage() {
                             {showFullSeasonOverview ? "Show less" : "Read more"}
                           </button>
                         )}
+                        <button
+                          onClick={() => setShowSeasonModal(true)}
+                          className="w-full mt-4 py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                        >
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          View Season Details
+                        </button>
                       </div>
                     )}
                   </div>
@@ -707,6 +724,144 @@ export default function SeriesDetailsPage() {
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
+          </div>
+        </div>
+      )}
+
+      {showSeasonModal && seasonDetails && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 overflow-y-auto"
+          onClick={() => setShowSeasonModal(false)}
+        >
+          <div 
+            className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowSeasonModal(false)}
+              className="absolute top-4 right-4 z-10 text-white/70 hover:text-white p-2 bg-black/50 rounded-full"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div className="relative h-64 md:h-80">
+              {seasonDetails.poster_path ? (
+                <Image
+                  src={getImageUrl(seasonDetails.poster_path, IMAGE_SIZES.backdrop.ultra) || ""}
+                  alt={seasonDetails.name || ""}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-800" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+                <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">{seasonDetails.name}</h2>
+                <div className="flex flex-wrap items-center gap-4 text-gray-300">
+                  {seasonDetails.air_date && (
+                    <span className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      {seasonDetails.air_date.split("-")[0]}
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    {seasonDetails.episodes?.length} episodes
+                  </span>
+                  {seasonDetails.vote_average > 0 && (
+                    <span className="flex items-center gap-1 text-yellow-400 font-bold">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                      {seasonDetails.vote_average.toFixed(1)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 md:p-8">
+              {seasonDetails.overview && (
+                <div className="mb-8">
+                  <h3 className="text-white text-xl font-semibold mb-3">Overview</h3>
+                  <p className="text-gray-300 leading-relaxed">{seasonDetails.overview}</p>
+                </div>
+              )}
+
+              {seasonCast.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-white text-xl font-semibold mb-4">Season Cast</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {seasonCast.slice(0, 8).map((actor) => (
+                      <div key={actor.id} className="flex items-center gap-3 bg-gray-800/50 rounded-xl p-3 border border-gray-700/30">
+                        {actor.profile_path ? (
+                          <div className="relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden">
+                            <Image
+                              src={getImageUrl(actor.profile_path, IMAGE_SIZES.profile.medium) || ""}
+                              alt={actor.name || ""}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-12 h-12 flex-shrink-0 bg-gray-700 rounded-full flex items-center justify-center">
+                            <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                            </svg>
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-white text-sm font-medium truncate">{actor.name}</p>
+                          {actor.roles?.[0]?.character && (
+                            <p className="text-gray-500 text-xs truncate">{actor.roles[0].character}</p>
+                          )}
+                          <p className="text-red-400 text-xs">{actor.total_episode_count} episodes</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {seasonCrew.length > 0 && (
+                <div>
+                  <h3 className="text-white text-xl font-semibold mb-4">Season Crew</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {seasonCrew.slice(0, 8).map((member, idx) => (
+                      <div key={`${member.id}-${member.job}-${idx}`} className="flex items-center gap-3 bg-gray-800/50 rounded-xl p-3 border border-gray-700/30">
+                        {member.profile_path ? (
+                          <div className="relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden">
+                            <Image
+                              src={getImageUrl(member.profile_path, IMAGE_SIZES.profile.medium) || ""}
+                              alt={member.name || ""}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-12 h-12 flex-shrink-0 bg-gray-700 rounded-full flex items-center justify-center">
+                            <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                            </svg>
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-white text-sm font-medium truncate">{member.name}</p>
+                          <p className="text-red-400 text-xs truncate">{member.job}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -98,6 +98,10 @@ class ApiClient {
     return this.fetch<TvSeason>(ENDPOINTS.tv.seasonDetails(id, seasonNumber));
   }
 
+  async getTvSeasonAggregateCredits(id: number, seasonNumber: number) {
+    return this.fetch<SeasonAggregateCredits>(ENDPOINTS.tv.seasonAggregateCredits(id, seasonNumber));
+  }
+
   async getMovieVideos(id: number) {
     return this.fetch<VideosResponse>(ENDPOINTS.movie.videos(id));
   }
@@ -219,6 +223,49 @@ export interface TvEpisode {
   vote_count: number;
   still_path: string | null;
   air_date: string;
+  crew: TvCrew[];
+  guest_stars: TvGuestStar[];
+}
+
+export interface TvCrew {
+  id: number;
+  name: string;
+  job: string;
+  department: string;
+  profile_path: string | null;
+}
+
+export interface TvGuestStar {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+}
+
+export interface SeasonAggregateCredits {
+  id: number;
+  cast: SeasonCast[];
+  crew: SeasonCrew[];
+}
+
+export interface SeasonCast {
+  id: number;
+  name: string;
+  original_name: string;
+  profile_path: string | null;
+  roles: {
+    character: string;
+    episode_count: number;
+  }[];
+  total_episode_count: number;
+}
+
+export interface SeasonCrew {
+  id: number;
+  name: string;
+  job: string;
+  department: string;
+  profile_path: string | null;
 }
 
 export interface Video {
