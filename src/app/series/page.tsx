@@ -5,28 +5,28 @@ import { apiClient } from "@/lib/api";
 
 async function getData() {
   const [trending, popular, topRated] = await Promise.all([
-    apiClient.getTrending("movie"),
-    apiClient.getMoviePopular(),
-    apiClient.getMovieTopRated(),
+    apiClient.getTrending("tv"),
+    apiClient.getTvPopular(),
+    apiClient.getTvTopRated(),
   ]);
 
   return { trending, popular, topRated };
 }
 
-export default async function Home() {
+export default async function SeriesPage() {
   const { trending, popular, topRated } = await getData();
 
-  const heroMovie = trending.results[0];
+  const heroSeries = trending.results[0];
 
   return (
     <div className="min-h-screen bg-[#1A1A1B]">
       <Navbar />
       <main>
-        {heroMovie && <HeroBanner item={heroMovie} />}
+        {heroSeries && <HeroBanner item={heroSeries} />}
         
         <div className="relative z-30 -mt-32">
-          <MovieRow title="Trending Now" items={trending.results.slice(1, 15)} autoScrollInterval={3000} />
-          <MovieRow title="Popular Movies" items={popular.results.slice(0, 15)} autoScrollInterval={5000} />
+          <MovieRow title="Trending Series" items={trending.results.slice(1, 15)} autoScrollInterval={3000} />
+          <MovieRow title="Popular Series" items={popular.results.slice(0, 15)} autoScrollInterval={5000} />
           <MovieRow title="Top Rated" items={topRated.results.slice(0, 15)} autoScrollInterval={8000} />
         </div>
       </main>

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { getImageUrl, IMAGE_SIZES } from "@/lib/api";
 import { MediaItem } from "@/lib/api/client";
 
@@ -11,6 +12,7 @@ interface MovieCardProps {
 }
 
 export default function MovieCard({ item, size = "normal" }: MovieCardProps) {
+  const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -18,17 +20,23 @@ export default function MovieCard({ item, size = "normal" }: MovieCardProps) {
   const posterUrl = getImageUrl(item.poster_path, IMAGE_SIZES.poster.large);
   const rating = item.vote_average ? item.vote_average.toFixed(1) : "N/A";
 
+  const handleClick = () => {
+    const mediaType = item.media_type === "tv" ? "tv" : "movie";
+    router.push(`/${mediaType}/${item.id}`);
+  };
+
   return (
     <div
-      className={`relative flex-shrink-0 cursor-pointer transition-transform duration-200 ${
-        size === "large" ? "w-64 h-96" : "w-44 h-64"
+      className={`relative cursor-pointer transition-transform duration-200 ${
+        size === "large" ? "aspect-[2/3]" : "aspect-[2/3]"
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={handleClick}
     >
       <div
         className={`relative w-full h-full rounded-md overflow-hidden bg-gray-800 transition-all duration-200 ${
-          isHovered ? "scale-110 z-20" : "scale-100"
+          isHovered ? "scale-105 z-20 shadow-xl" : "scale-100"
         }`}
       >
         {posterUrl && !imageError ? (
