@@ -1,5 +1,5 @@
 import Navbar from "@/components/Navbar";
-import HeroBanner from "@/components/HeroBanner";
+import HeroBannerWrapper from "@/components/HeroBannerWrapper";
 import MovieRow from "@/components/MovieRow";
 import { apiClient } from "@/lib/api";
 
@@ -16,13 +16,13 @@ async function getData() {
 export default async function SeriesPage() {
   const { trending, popular, topRated } = await getData();
 
-  const heroSeries = trending.results[0];
+  const heroSeries = trending.results.slice(0, 5);
 
   return (
     <div className="min-h-screen bg-[#1A1A1B]">
       <Navbar />
       <main>
-        {heroSeries && <HeroBanner item={heroSeries} />}
+        <HeroBannerWrapper items={heroSeries} />
         
         <div className="relative z-30 -mt-32">
           <MovieRow title="Trending Series" items={trending.results.slice(1, 15)} autoScrollInterval={3000} />
