@@ -112,8 +112,8 @@ export default function SeriesDetailsPage() {
     );
   }
 
-  const posterUrl = getImageUrl(series.poster_path, IMAGE_SIZES.poster.large);
-  const backdropUrl = getImageUrl(series.backdrop_path, IMAGE_SIZES.backdrop.large);
+  const posterUrl = getImageUrl(series.poster_path, IMAGE_SIZES.poster.original);
+  const backdropUrl = getImageUrl(series.backdrop_path, IMAGE_SIZES.backdrop.ultra);
   const rating = series.vote_average?.toFixed(1) || "N/A";
 
   const getStatusColor = (status: string) => {
@@ -131,10 +131,10 @@ export default function SeriesDetailsPage() {
   };
 
   const getRatingColor = (rating: number) => {
-    if (rating >= 7.5) return "text-green-400";
+    if (rating >= 7.5) return "text-yellow-400";
     if (rating >= 6.0) return "text-yellow-400";
-    if (rating >= 4.0) return "text-orange-400";
-    return "text-red-400";
+    if (rating >= 4.0) return "text-yellow-400";
+    return "text-yellow-400";
   };
 
   const getProviderLink = (providerName: string) => {
