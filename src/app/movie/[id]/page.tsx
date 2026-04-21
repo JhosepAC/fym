@@ -23,6 +23,7 @@ export default function MovieDetailsPage() {
   const [showPosterModal, setShowPosterModal] = useState(false);
   const [showTrailerModal, setShowTrailerModal] = useState(false);
   const overviewRef = React.useRef<HTMLParagraphElement>(null);
+  const castScrollRef = React.useRef<HTMLDivElement>(null);
 
   const movieId = Number(params.id);
 
@@ -378,33 +379,57 @@ export default function MovieDetailsPage() {
       {cast.length > 0 && (
         <div className="px-6 lg:px-12 pb-12 max-w-7xl mx-auto">
           <h3 className="text-white text-2xl font-semibold mb-6">Cast</h3>
-          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-            {cast.slice(0, 10).map((actor) => (
-              <div key={actor.id} className="flex-shrink-0 w-32">
-                <div className="bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/30">
-                  {actor.profile_path ? (
-                    <div className="relative w-32 h-40">
-                      <Image
-                        src={getImageUrl(actor.profile_path, IMAGE_SIZES.profile.medium) || ""}
-                        alt={actor.name || ""}
-                        fill
-                        className="object-cover"
-                      />
+          <div className="relative group">
+            <button
+              onClick={() => castScrollRef.current?.scrollBy({ left: -300, behavior: "smooth" })}
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-black/70 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0"
+            >
+              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            
+            <div 
+              ref={castScrollRef}
+              className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {cast.slice(0, 10).map((actor) => (
+                <div key={actor.id} className="flex-shrink-0 w-32">
+                  <div className="bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/30 hover:border-red-500/50 transition-all duration-300 hover:scale-105">
+                    {actor.profile_path ? (
+                      <div className="relative w-32 h-40">
+                        <Image
+                          src={getImageUrl(actor.profile_path, IMAGE_SIZES.profile.medium) || ""}
+                          alt={actor.name || ""}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-32 h-40 bg-gray-800 flex items-center justify-center">
+                        <svg className="w-12 h-12 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                        </svg>
+                      </div>
+                    )}
+                    <div className="p-3">
+                      <p className="text-white text-sm font-medium truncate">{actor.name}</p>
+                      <p className="text-gray-500 text-xs truncate">{actor.character}</p>
                     </div>
-                  ) : (
-                    <div className="w-32 h-40 bg-gray-800 flex items-center justify-center">
-                      <svg className="w-12 h-12 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                      </svg>
-                    </div>
-                  )}
-                  <div className="p-3">
-                    <p className="text-white text-sm font-medium truncate">{actor.name}</p>
-                    <p className="text-gray-500 text-xs truncate">{actor.character}</p>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            <button
+              onClick={() => castScrollRef.current?.scrollBy({ left: 300, behavior: "smooth" })}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-black/70 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0"
+            >
+              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
