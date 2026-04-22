@@ -799,6 +799,27 @@ export default function SeriesDetailsPage() {
               </div>
             </div>
 
+            {(() => {
+              const seasonTrailer = seasonVideos.find(
+                (v) => v.type === "Trailer" && v.site === "YouTube"
+              );
+              const seasonTrailerUrl = seasonTrailer ? `https://www.youtube.com/watch?v=${seasonTrailer.key}` : null;
+
+              return seasonTrailerUrl ? (
+                <div className="px-6 lg:px-12 pb-6">
+                  <button
+                    onClick={() => setShowTrailerModal(true)}
+                    className="group relative flex items-center gap-3 bg-red-600 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 hover:bg-red-500 hover:scale-105 hover:shadow-[0_0_20px_rgba(220,38,38,0.5)]"
+                  >
+                    <svg className="w-5 h-5 fill-white" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                    WATCH TRAILER
+                  </button>
+                </div>
+              ) : null;
+            })()}
+
             <div className="p-6 md:p-8">
               {seasonDetails.overview && (
                 <div className="mb-8">
@@ -806,27 +827,6 @@ export default function SeriesDetailsPage() {
                   <p className="text-gray-300 leading-relaxed">{seasonDetails.overview}</p>
                 </div>
               )}
-
-              {(() => {
-                const seasonTrailer = seasonVideos.find(
-                  (v) => v.type === "Trailer" && v.site === "YouTube"
-                );
-                const seasonTrailerUrl = seasonTrailer ? `https://www.youtube.com/watch?v=${seasonTrailer.key}` : null;
-
-                return seasonTrailerUrl ? (
-                  <div className="mb-8">
-                    <button
-                      onClick={() => setShowTrailerModal(true)}
-                      className="group relative flex items-center gap-3 bg-red-600 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 hover:bg-red-500 hover:scale-105 hover:shadow-[0_0_20px_rgba(220,38,38,0.5)]"
-                    >
-                      <svg className="w-5 h-5 fill-white" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
-                      WATCH TRAILER
-                    </button>
-                  </div>
-                ) : null;
-              })()}
 
               {seasonCast.length > 0 && (
                 <div className="mb-8">
