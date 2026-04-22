@@ -102,6 +102,10 @@ class ApiClient {
     return this.fetch<SeasonAggregateCredits>(ENDPOINTS.tv.seasonAggregateCredits(id, seasonNumber));
   }
 
+  async getTvSeasonVideos(id: number, seasonNumber: number) {
+    return this.fetch<VideosResponse>(ENDPOINTS.tv.seasonVideos(id, seasonNumber));
+  }
+
   async getMovieVideos(id: number) {
     return this.fetch<VideosResponse>(ENDPOINTS.movie.videos(id));
   }

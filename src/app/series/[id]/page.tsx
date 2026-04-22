@@ -24,6 +24,7 @@ export default function SeriesDetailsPage() {
   const [seasonDetails, setSeasonDetails] = useState<TvSeason | null>(null);
   const [seasonCast, setSeasonCast] = useState<SeasonCast[]>([]);
   const [seasonCrew, setSeasonCrew] = useState<SeasonCrew[]>([]);
+  const [seasonVideos, setSeasonVideos] = useState<Video[]>([]);
   const [showSeasonModal, setShowSeasonModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,15 +87,17 @@ export default function SeriesDetailsPage() {
       
       try {
         setLoadingEpisodes(true);
-        const [seasonData, aggregateCredits] = await Promise.all([
+        const [seasonData, aggregateCredits, videosData] = await Promise.all([
           apiClient.getTvSeasonDetails(seriesId, selectedSeason),
           apiClient.getTvSeasonAggregateCredits(seriesId, selectedSeason),
+          apiClient.getTvSeasonVideos(seriesId, selectedSeason),
         ]);
         setSeasonDetails(seasonData);
         setSeasonEpisodes(seasonData.episodes || []);
         setSelectedEpisode(seasonData.episodes?.[0] || null);
         setSeasonCast(aggregateCredits.cast || []);
         setSeasonCrew(aggregateCredits.crew || []);
+        setSeasonVideos(videosData.results || []);
       } catch (err) {
         console.error("Failed to load episodes");
       } finally {
@@ -703,30 +706,39 @@ export default function SeriesDetailsPage() {
         </div>
       )}
 
-      {showTrailerModal && trailer && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4"
-          onClick={() => setShowTrailerModal(false)}
-        >
-          <div className="relative w-full max-w-6xl aspect-video" onClick={(e) => e.stopPropagation()}>
-            <button
+      {showTrailerModal && (() => {
+          const seasonTrailer = seasonVideos.find(
+            (v) => v.type === "Trailer" && v.site === "YouTube"
+          );
+          const activeTrailer = seasonTrailer || trailer;
+
+          if (!activeTrailer) return null;
+
+          return (
+            <div 
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4"
               onClick={() => setShowTrailerModal(false)}
-              className="absolute -top-12 right-0 text-white/70 hover:text-white p-2"
             >
-              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <iframe
-              src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&vq=hd1080`}
-              title={trailer.name}
-              className="w-full h-full rounded-lg"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        </div>
-      )}
+              <div className="relative w-full max-w-6xl aspect-video" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => setShowTrailerModal(false)}
+                  className="absolute -top-12 right-0 text-white/70 hover:text-white p-2"
+                >
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <iframe
+                  src={`https://www.youtube.com/embed/${activeTrailer.key}?autoplay=1&vq=hd1080`}
+                  title={activeTrailer.name}
+                  className="w-full h-full rounded-lg"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          );
+        })()}
 
       {showSeasonModal && seasonDetails && (
         <div 
@@ -794,6 +806,27 @@ export default function SeriesDetailsPage() {
                   <p className="text-gray-300 leading-relaxed">{seasonDetails.overview}</p>
                 </div>
               )}
+
+              {(() => {
+                const seasonTrailer = seasonVideos.find(
+                  (v) => v.type === "Trailer" && v.site === "YouTube"
+                );
+                const seasonTrailerUrl = seasonTrailer ? `https://www.youtube.com/watch?v=${seasonTrailer.key}` : null;
+
+                return seasonTrailerUrl ? (
+                  <div className="mb-8">
+                    <button
+                      onClick={() => setShowTrailerModal(true)}
+                      className="group relative flex items-center gap-3 bg-red-600 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 hover:bg-red-500 hover:scale-105 hover:shadow-[0_0_20px_rgba(220,38,38,0.5)]"
+                    >
+                      <svg className="w-5 h-5 fill-white" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                      WATCH TRAILER
+                    </button>
+                  </div>
+                ) : null;
+              })()}
 
               {seasonCast.length > 0 && (
                 <div className="mb-8">
