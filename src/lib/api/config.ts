@@ -52,6 +52,8 @@ export const ENDPOINTS = {
     seasonDetails: (id: number, season: number) => `/tv/${id}/season/${season}`,
     seasonAggregateCredits: (id: number, season: number) => `/tv/${id}/season/${season}/aggregate_credits`,
     seasonVideos: (id: number, season: number) => `/tv/${id}/season/${season}/videos`,
+    episodeImages: (id: number, season: number, episode: number) => `/tv/${id}/season/${season}/episode/${episode}/images`,
+    episodeVideos: (id: number, season: number, episode: number) => `/tv/${id}/season/${season}/episode/${episode}/videos`,
     videos: (id: number) => `/tv/${id}/videos`,
   },
   search: {
