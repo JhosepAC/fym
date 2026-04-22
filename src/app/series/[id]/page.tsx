@@ -1161,13 +1161,12 @@ export default function SeriesDetailsPage() {
                         }}
                         className="group relative aspect-video rounded-xl overflow-hidden bg-gray-800"
                       >
-                        <Image
-                          src={`https://img.youtube.com/vi/${video.key}/maxresdefault.jpg`}
+                        <img
+                          src={`https://i.ytimg.com/vi/${video.key}/maxresdefault.jpg`}
                           alt={video.name || ""}
-                          fill
-                          className="object-cover group-hover:scale-110 transition-transform duration-500"
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${video.key}/hqdefault.jpg`;
+                            (e.target as HTMLImageElement).src = `https://i.ytimg.com/vi/${video.key}/hqdefault.jpg`;
                           }}
                         />
                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center group-hover:bg-black/30 transition-colors">
