@@ -102,6 +102,18 @@ class ApiClient {
     return this.fetch<SeasonAggregateCredits>(ENDPOINTS.tv.seasonAggregateCredits(id, seasonNumber));
   }
 
+  async getTvSeasonVideos(id: number, seasonNumber: number) {
+    return this.fetch<VideosResponse>(ENDPOINTS.tv.seasonVideos(id, seasonNumber));
+  }
+
+  async getTvEpisodeImages(id: number, seasonNumber: number, episodeNumber: number) {
+    return this.fetch<EpisodeImagesResponse>(ENDPOINTS.tv.episodeImages(id, seasonNumber, episodeNumber));
+  }
+
+  async getTvEpisodeVideos(id: number, seasonNumber: number, episodeNumber: number) {
+    return this.fetch<VideosResponse>(ENDPOINTS.tv.episodeVideos(id, seasonNumber, episodeNumber));
+  }
+
   async getMovieVideos(id: number) {
     return this.fetch<VideosResponse>(ENDPOINTS.movie.videos(id));
   }
@@ -279,6 +291,18 @@ export interface Video {
 export interface VideosResponse {
   id: number;
   results: Video[];
+}
+
+export interface EpisodeImagesResponse {
+  id: number;
+ stills: {
+    aspect_ratio: number;
+    height: number;
+    width: number;
+    file_path: string;
+    vote_average: number;
+    vote_count: number;
+  }[];
 }
 
 export interface Cast {
