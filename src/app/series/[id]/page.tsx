@@ -806,7 +806,7 @@ export default function SeriesDetailsPage() {
               const seasonTrailerUrl = seasonTrailer ? `https://www.youtube.com/watch?v=${seasonTrailer.key}` : null;
 
               return seasonTrailerUrl ? (
-                <div className="px-6 lg:px-12 pb-6">
+                <div className="px-6 lg:px-12 pt-4 pb-6">
                   <button
                     onClick={() => setShowTrailerModal(true)}
                     className="group relative flex items-center gap-3 bg-red-600 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 hover:bg-red-500 hover:scale-105 hover:shadow-[0_0_20px_rgba(220,38,38,0.5)]"
