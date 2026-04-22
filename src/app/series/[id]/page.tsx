@@ -32,6 +32,7 @@ export default function SeriesDetailsPage() {
   const [showFullSeasonOverview, setShowFullSeasonOverview] = useState(false);
   const [showReadMore, setShowReadMore] = useState(false);
   const [showPosterModal, setShowPosterModal] = useState(false);
+  const [showSeasonPosterModal, setShowSeasonPosterModal] = useState(false);
   const [showTrailerModal, setShowTrailerModal] = useState(false);
   const overviewRef = React.useRef<HTMLParagraphElement>(null);
   const castScrollRef = React.useRef<HTMLDivElement>(null);
@@ -109,6 +110,17 @@ export default function SeriesDetailsPage() {
   }, [seriesId, selectedSeason]);
 
   useEffect(() => {
+    if (showSeasonModal || showTrailerModal || showPosterModal || showSeasonPosterModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [showSeasonModal, showTrailerModal, showPosterModal, showSeasonPosterModal]);
+
+  useEffect(() => {
     if (series && overviewRef.current) {
       const checkOverflow = () => {
         if (overviewRef.current) {
@@ -156,6 +168,7 @@ export default function SeriesDetailsPage() {
 
   const posterUrl = getImageUrl(series.poster_path, IMAGE_SIZES.poster.original);
   const backdropUrl = getImageUrl(series.backdrop_path, IMAGE_SIZES.backdrop.ultra);
+  const hasPoster = series.poster_path !== null && series.poster_path !== undefined;
   const rating = series.vote_average?.toFixed(1) || "N/A";
 
   const getStatusColor = (status: string) => {
@@ -226,9 +239,10 @@ export default function SeriesDetailsPage() {
 
           <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
             <div className="flex-shrink-0">
-              <div 
+              <button 
+                type="button"
                 className="w-64 lg:w-80 rounded-xl overflow-hidden cursor-pointer"
-                onClick={() => posterUrl && setShowPosterModal(true)}
+                onClick={() => hasPoster && setShowPosterModal(true)}
               >
                 {posterUrl ? (
                   <Image
@@ -243,7 +257,7 @@ export default function SeriesDetailsPage() {
                     <span className="text-gray-500">No Image</span>
                   </div>
                 )}
-              </div>
+              </button>
             </div>
 
             <div className="flex-1 max-w-3xl">
@@ -482,7 +496,10 @@ export default function SeriesDetailsPage() {
                     {seasonDetails && (
                       <div className="sticky top-24 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-white/10">
                         {seasonDetails.poster_path ? (
-                          <div className="relative w-full aspect-[2/3] mb-4 rounded-xl overflow-hidden">
+                          <div 
+                            className="relative w-full aspect-[2/3] mb-4 rounded-xl overflow-hidden cursor-pointer"
+                            onClick={() => setShowSeasonPosterModal(true)}
+                          >
                             <Image
                               src={getImageUrl(seasonDetails.poster_path, IMAGE_SIZES.poster.large) || ""}
                               alt={seasonDetails.name || ""}
@@ -680,7 +697,7 @@ export default function SeriesDetailsPage() {
         </div>
       </div>
 
-      {showPosterModal && posterUrl && (
+      {showPosterModal && hasPoster && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
           onClick={() => setShowPosterModal(false)}
@@ -695,7 +712,7 @@ export default function SeriesDetailsPage() {
               </svg>
             </button>
             <Image
-              src={posterUrl}
+              src={posterUrl || ""}
               alt={series.name || ""}
               width={600}
               height={900}
@@ -740,6 +757,32 @@ export default function SeriesDetailsPage() {
           );
         })()}
 
+      {showSeasonPosterModal && seasonDetails?.poster_path && (
+        <div 
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
+          onClick={() => setShowSeasonPosterModal(false)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh]">
+            <button
+              onClick={() => setShowSeasonPosterModal(false)}
+              className="absolute -top-12 right-0 text-white/70 hover:text-white p-2"
+            >
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <Image
+              src={getImageUrl(seasonDetails.poster_path, IMAGE_SIZES.poster.large) || ""}
+              alt={seasonDetails.name || ""}
+              width={500}
+              height={750}
+              className="max-h-[90vh] w-auto rounded-lg"
+              quality={100}
+            />
+          </div>
+        </div>
+      )}
+
       {showSeasonModal && seasonDetails && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 overflow-y-auto"
@@ -759,16 +802,21 @@ export default function SeriesDetailsPage() {
             </button>
 
             <div className="relative h-64 md:h-80">
-              {seasonDetails.poster_path ? (
-                <Image
-                  src={getImageUrl(seasonDetails.poster_path, IMAGE_SIZES.backdrop.ultra) || ""}
-                  alt={seasonDetails.name || ""}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-800" />
-              )}
+              <div 
+                className="absolute inset-0 cursor-pointer"
+                onClick={() => setShowSeasonPosterModal(true)}
+              >
+                {seasonDetails.poster_path ? (
+                  <Image
+                    src={getImageUrl(seasonDetails.poster_path, IMAGE_SIZES.backdrop.ultra) || ""}
+                    alt={seasonDetails.name || ""}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-800" />
+                )}
+              </div>
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">{seasonDetails.name}</h2>
@@ -806,7 +854,7 @@ export default function SeriesDetailsPage() {
               const seasonTrailerUrl = seasonTrailer ? `https://www.youtube.com/watch?v=${seasonTrailer.key}` : null;
 
               return seasonTrailerUrl ? (
-                <div className="px-6 lg:px-12 pt-4 pb-6">
+                <div className="pt-4 pb-6 pl-6 md:pl-8">
                   <button
                     onClick={() => setShowTrailerModal(true)}
                     className="group relative flex items-center gap-3 bg-red-600 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 hover:bg-red-500 hover:scale-105 hover:shadow-[0_0_20px_rgba(220,38,38,0.5)]"
