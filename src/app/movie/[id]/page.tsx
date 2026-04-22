@@ -129,8 +129,8 @@ export default function MovieDetailsPage() {
     );
   }
 
-  const posterUrl = getImageUrl(movie.poster_path, IMAGE_SIZES.poster.large);
-  const backdropUrl = getImageUrl(movie.backdrop_path, IMAGE_SIZES.backdrop.original);
+  const posterUrl = getImageUrl(movie.poster_path, IMAGE_SIZES.poster.original);
+  const backdropUrl = getImageUrl(movie.backdrop_path, IMAGE_SIZES.backdrop.ultra);
   const rating = movie.vote_average?.toFixed(1) || "N/A";
 
   const formatRuntime = (minutes: number) => {
@@ -169,10 +169,10 @@ export default function MovieDetailsPage() {
   };
 
   const getRatingColor = (rating: number) => {
-    if (rating >= 7.5) return "text-green-400";
+    if (rating >= 7.5) return "text-yellow-400";
     if (rating >= 6.0) return "text-yellow-400";
-    if (rating >= 4.0) return "text-orange-400";
-    return "text-red-400";
+    if (rating >= 4.0) return "text-yellow-400";
+    return "text-yellow-400";
   };
 
   return (

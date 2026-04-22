@@ -86,6 +86,22 @@ class ApiClient {
     return this.fetch<TvShowDetail>(ENDPOINTS.tv.details(id));
   }
 
+  async getTvRecommendations(id: number, page: number = 1) {
+    return this.fetch<ApiResponse>(ENDPOINTS.tv.recommendations(id), { page: String(page) });
+  }
+
+  async getTvCredits(id: number) {
+    return this.fetch<CreditsResponse>(ENDPOINTS.tv.credits(id));
+  }
+
+  async getTvSeasonDetails(id: number, seasonNumber: number) {
+    return this.fetch<TvSeason>(ENDPOINTS.tv.seasonDetails(id, seasonNumber));
+  }
+
+  async getTvSeasonAggregateCredits(id: number, seasonNumber: number) {
+    return this.fetch<SeasonAggregateCredits>(ENDPOINTS.tv.seasonAggregateCredits(id, seasonNumber));
+  }
+
   async getMovieVideos(id: number) {
     return this.fetch<VideosResponse>(ENDPOINTS.movie.videos(id));
   }
@@ -173,6 +189,8 @@ export interface TvShowDetail extends MediaItem {
   episode_run_time: number[];
   genres: { id: number; name: string }[];
   tagline: string;
+  status: string;
+  first_air_date: string;
   seasons: {
     id: number;
     name: string;
@@ -181,6 +199,73 @@ export interface TvShowDetail extends MediaItem {
     poster_path: string | null;
     air_date: string;
   }[];
+}
+
+export interface TvSeason {
+  id: number;
+  name: string;
+  overview: string | null;
+  season_number: number;
+  air_date: string;
+  poster_path: string | null;
+  episodes: TvEpisode[];
+  vote_average: number;
+}
+
+export interface TvEpisode {
+  id: number;
+  name: string;
+  overview: string | null;
+  episode_number: number;
+  season_number: number;
+  runtime: number | null;
+  vote_average: number;
+  vote_count: number;
+  still_path: string | null;
+  air_date: string;
+  crew: TvCrew[];
+  guest_stars: TvGuestStar[];
+}
+
+export interface TvCrew {
+  id: number;
+  name: string;
+  job: string;
+  department: string;
+  profile_path: string | null;
+}
+
+export interface TvGuestStar {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+}
+
+export interface SeasonAggregateCredits {
+  id: number;
+  cast: SeasonCast[];
+  crew: SeasonCrew[];
+}
+
+export interface SeasonCast {
+  id: number;
+  name: string;
+  original_name: string;
+  profile_path: string | null;
+  roles: {
+    character: string;
+    episode_count: number;
+  }[];
+  total_episode_count: number;
+}
+
+export interface SeasonCrew {
+  id: number;
+  name: string;
+  job: string;
+  department: string;
+  profile_path: string | null;
 }
 
 export interface Video {
