@@ -31,6 +31,8 @@ export default function SeriesDetailsPage() {
   const [showEpisodeModal, setShowEpisodeModal] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedStillImage, setSelectedStillImage] = useState<string | null>(null);
+  const [showStillModal, setShowStillModal] = useState(false);
   const [showEpisodeTrailerModal, setShowEpisodeTrailerModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -116,7 +118,7 @@ export default function SeriesDetailsPage() {
   }, [seriesId, selectedSeason]);
 
   useEffect(() => {
-    if (showSeasonModal || showTrailerModal || showPosterModal || showSeasonPosterModal || showEpisodeModal || showImageModal || showEpisodeTrailerModal) {
+    if (showSeasonModal || showTrailerModal || showPosterModal || showSeasonPosterModal || showEpisodeModal || showImageModal || showEpisodeTrailerModal || showStillModal) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
@@ -124,7 +126,7 @@ export default function SeriesDetailsPage() {
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [showSeasonModal, showTrailerModal, showPosterModal, showSeasonPosterModal, showEpisodeModal, showImageModal, showEpisodeTrailerModal]);
+  }, [showSeasonModal, showTrailerModal, showPosterModal, showSeasonPosterModal, showEpisodeModal, showImageModal, showEpisodeTrailerModal, showStillModal]);
 
   useEffect(() => {
     if (series && overviewRef.current) {
@@ -606,7 +608,16 @@ export default function SeriesDetailsPage() {
                         }`}
                       >
                         <div className="flex gap-5 p-4">
-                          <div className="flex-shrink-0 w-52 h-32 relative rounded-xl overflow-hidden shadow-lg">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (episode.still_path) {
+                                setSelectedStillImage(episode.still_path);
+                                setShowStillModal(true);
+                              }
+                            }}
+                            className="flex-shrink-0 w-52 h-32 relative rounded-xl overflow-hidden shadow-lg group/image cursor-pointer hover:ring-2 hover:ring-red-500 transition-all duration-300"
+                          >
                             {episode.still_path ? (
                               <Image
                                 src={getImageUrl(episode.still_path, IMAGE_SIZES.backdrop.medium) || ""}
@@ -622,10 +633,15 @@ export default function SeriesDetailsPage() {
                               </div>
                             )}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                              </svg>
+                            </div>
                             <div className="absolute top-2 left-2 px-2 py-1 bg-black/70 backdrop-blur-sm rounded-lg">
                               <span className="text-red-500 font-bold text-sm">EP {episode.episode_number}</span>
                             </div>
-                          </div>
+                          </button>
                           
                           <div className="flex-1 flex flex-col justify-between py-2 min-w-0">
                             <div className="space-y-2">
@@ -1201,6 +1217,32 @@ export default function SeriesDetailsPage() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {showStillModal && selectedStillImage && (
+        <div 
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4"
+          onClick={() => setShowStillModal(false)}
+        >
+          <div className="relative max-w-6xl max-h-[90vh]">
+            <button
+              onClick={() => setShowStillModal(false)}
+              className="absolute -top-12 right-0 text-white/70 hover:text-white p-2"
+            >
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <Image
+              src={getImageUrl(selectedStillImage, IMAGE_SIZES.backdrop.original) || ""}
+              alt="Episode still"
+              width={1920}
+              height={1080}
+              className="max-h-[90vh] w-auto rounded-lg"
+              quality={100}
+            />
           </div>
         </div>
       )}
