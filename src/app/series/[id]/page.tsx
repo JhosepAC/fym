@@ -268,7 +268,7 @@ export default function SeriesDetailsPage() {
             <div className="flex-shrink-0">
               <button 
                 type="button"
-                className="w-64 lg:w-80 rounded-xl overflow-hidden cursor-pointer"
+                className="relative w-64 lg:w-80 rounded-xl overflow-hidden cursor-pointer group"
                 onClick={() => hasPoster && setShowPosterModal(true)}
               >
                 {posterUrl ? (
@@ -277,11 +277,20 @@ export default function SeriesDetailsPage() {
                     alt={series.name || ""}
                     width={320}
                     height={480}
-                    className="w-full h-auto"
+                    className="w-full h-auto group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
                   <div className="w-80 h-[480px] bg-gray-800 flex items-center justify-center">
                     <span className="text-gray-500">No Image</span>
+                  </div>
+                )}
+                {hasPoster && (
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center">
+                      <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                      </svg>
+                    </div>
                   </div>
                 )}
               </button>
@@ -524,15 +533,22 @@ export default function SeriesDetailsPage() {
                       <div className="sticky top-24 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-white/10">
                         {seasonDetails.poster_path ? (
                           <div 
-                            className="relative w-full aspect-[2/3] mb-4 rounded-xl overflow-hidden cursor-pointer"
+                            className="relative w-full aspect-[2/3] mb-4 rounded-xl overflow-hidden cursor-pointer group"
                             onClick={() => setShowSeasonPosterModal(true)}
                           >
                             <Image
                               src={getImageUrl(seasonDetails.poster_path, IMAGE_SIZES.poster.large) || ""}
                               alt={seasonDetails.name || ""}
                               fill
-                              className="object-cover"
+                              className="object-cover group-hover:scale-105 transition-transform duration-500"
                             />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                              <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
+                                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                                </svg>
+                              </div>
+                            </div>
                           </div>
                         ) : (
                           <div className="w-full aspect-[2/3] bg-gray-800 rounded-xl mb-4 flex items-center justify-center">
@@ -776,7 +792,7 @@ export default function SeriesDetailsPage() {
 
       {showPosterModal && hasPoster && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
           onClick={() => setShowPosterModal(false)}
         >
           <div className="relative max-w-4xl max-h-[90vh]">
