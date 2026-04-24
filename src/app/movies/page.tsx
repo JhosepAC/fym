@@ -1,6 +1,4 @@
-import Navbar from "@/components/Navbar";
-import HeroBanner from "@/components/HeroBanner";
-import MovieRow from "@/components/MovieRow";
+import MoviesClient from "./MoviesClient";
 import { apiClient } from "@/lib/api";
 
 async function getData() {
@@ -14,24 +12,28 @@ async function getData() {
   return { trending, popular, topRated, upcoming };
 }
 
+async function getAllMovies() {
+  const allMovies: Map<number, any> = new Map();
+  const totalPages = 20;
+  
+  for (let page = 1; page <= totalPages; page++) {
+    const [popular, topRated, upcoming] = await Promise.all([
+      apiClient.getMoviePopular(page),
+      apiClient.getMovieTopRated(page),
+      apiClient.getMovieUpcoming(page),
+    ]);
+    
+    [...popular.results, ...topRated.results, ...upcoming.results].forEach((movie: any) => {
+      if (!allMovies.has(movie.id)) {
+        allMovies.set(movie.id, movie);
+      }
+    });
+  }
+  
+  return Array.from(allMovies.values());
+}
+
 export default async function MoviesPage() {
-  const { trending, popular, topRated, upcoming } = await getData();
-
-  const heroMovie = trending.results[0];
-
-  return (
-    <div className="min-h-screen bg-[#1A1A1B]">
-      <Navbar />
-      <main>
-        {heroMovie && <HeroBanner item={heroMovie} />}
-        
-        <div className="relative z-30 -mt-32">
-          <MovieRow title="Trending Movies" items={trending.results.slice(1, 15)} autoScrollInterval={3000} />
-          <MovieRow title="Popular Movies" items={popular.results.slice(0, 15)} autoScrollInterval={5000} />
-          <MovieRow title="Top Rated" items={topRated.results.slice(0, 15)} autoScrollInterval={8000} />
-          <MovieRow title="Upcoming" items={upcoming.results.slice(0, 15)} autoScrollInterval={6000} />
-        </div>
-      </main>
-    </div>
-  );
+  const [initialData, allMovies] = await Promise.all([getData(), getAllMovies()]);
+  return <MoviesClient initialData={initialData} allMovies={allMovies} />;
 }
