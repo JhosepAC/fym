@@ -42,7 +42,7 @@ export default function MovieCard({ item, size = "normal" }: MovieCardProps) {
     >
       <div
         className={`relative w-full aspect-[2/3] rounded-xl overflow-hidden bg-gray-900 transition-all duration-500 ${
-          isHovered ? "scale-105 shadow-2xl shadow-red-500/30" : "shadow-md"
+          isHovered ? "scale-105" : "shadow-md"
         }`}
       >
         {posterUrl && !imageError ? (

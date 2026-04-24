@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getImageUrl, IMAGE_SIZES } from "@/lib/api";
-import { MediaItem } from "@/lib/api/client";
+import { MediaItem, Video } from "@/lib/api/client";
 import { useRouter } from "next/navigation";
 
 interface HeroBannerProps {
@@ -16,6 +16,9 @@ export default function HeroBanner({ items, currentIndex, onIndexChange }: HeroB
   const router = useRouter();
   const [imageError, setImageError] = useState(false);
   const [animKey, setAnimKey] = useState(0);
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [showTrailerModal, setShowTrailerModal] = useState(false);
+  const [trailer, setTrailer] = useState<Video | null>(null);
   
   const item = items[currentIndex];
   const backdropUrl = getImageUrl(item?.backdrop_path, IMAGE_SIZES.backdrop.ultra);
@@ -23,16 +26,56 @@ export default function HeroBanner({ items, currentIndex, onIndexChange }: HeroB
   const year = item?.release_date?.split("-")[0] || item?.first_air_date?.split("-")[0] || "";
   const mediaType = item?.media_type === "tv" || item?.first_air_date ? "tv" : "movie";
 
+  useEffect(() => {
+    async function fetchVideos() {
+      if (!item?.id) return;
+      
+      try {
+        const type = mediaType === "tv" ? "tv" : "movie";
+        const res = await fetch(
+          `https://api.themoviedb.org/3/${type}/${item.id}/videos?api_key=057a69a9b8b39aa9ab75e749e7113b80&language=en-US`
+        );
+        const data = await res.json();
+        const videoList = data.results || [];
+        setVideos(videoList);
+        
+        const officialTrailer = videoList.find((v: any) => v.type === "Trailer" && v.site === "YouTube" && v.official === true);
+        const anyTrailer = videoList.find((v: any) => v.type === "Trailer" && v.site === "YouTube");
+        setTrailer(officialTrailer || anyTrailer || null);
+      } catch (error) {
+        console.error("Error fetching videos:", error);
+        setVideos([]);
+        setTrailer(null);
+      }
+    }
+
+    fetchVideos();
+  }, [item?.id, mediaType]);
+
+  useEffect(() => {
+    if (showTrailerModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [showTrailerModal]);
+
   const triggerAnimation = () => {
     setAnimKey(prev => prev + 1);
   };
 
-  const handlePlay = () => {
+  const handleMoreInfo = () => {
     router.push(`/${mediaType}/${item.id}`);
   };
 
-  const handleMoreInfo = () => {
-    router.push(`/${mediaType}/${item.id}`);
+  const handlePlayTrailer = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (trailer) {
+      setShowTrailerModal(true);
+    }
   };
 
   const goNext = () => {
@@ -111,22 +154,8 @@ export default function HeroBanner({ items, currentIndex, onIndexChange }: HeroB
 
         <div className="flex flex-wrap gap-4">
           <button 
-            onClick={handlePlay}
-            className="group flex items-center gap-3 bg-white text-black px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-200 transition-all duration-300 hover:scale-105 shadow-lg shadow-white/10"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-              className="w-6 h-6 group-hover:scale-110 transition-transform"
-            >
-              <path d="M8 5v14l11-7z" />
-            </svg>
-            Play Now
-          </button>
-          <button 
             onClick={handleMoreInfo}
-            className="group flex items-center gap-3 bg-white/10 backdrop-blur-md text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white/20 transition-all duration-300 border border-white/20"
+            className="group flex items-center gap-3 bg-white text-black px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-200 transition-all duration-300 hover:scale-105 shadow-lg shadow-white/10"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -136,13 +165,28 @@ export default function HeroBanner({ items, currentIndex, onIndexChange }: HeroB
               stroke="currentColor"
               className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 3v12m0 0a12 12 0 1 0 0 24 12 12 0 0 0 0-24z"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             More Info
+          </button>
+          <button 
+            onClick={handlePlayTrailer}
+            disabled={!trailer}
+            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 ${
+              trailer
+                ? "bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/30 hover:scale-110"
+                : "bg-white/5 border border-white/10 text-gray-500 cursor-not-allowed"
+            }`}
+            title={trailer ? "Play Trailer" : "No trailer available"}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              className="w-6 h-6"
+            >
+              <path d="M8 5v14l11-7z" />
+            </svg>
           </button>
         </div>
 
@@ -202,6 +246,31 @@ export default function HeroBanner({ items, currentIndex, onIndexChange }: HeroB
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
         </svg>
       </div>
+
+      {showTrailerModal && trailer && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4"
+          onClick={() => setShowTrailerModal(false)}
+        >
+          <div className="relative w-full max-w-6xl aspect-video" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setShowTrailerModal(false)}
+              className="absolute -top-12 right-0 text-white/70 hover:text-white p-2"
+            >
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <iframe
+              src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&vq=hd1080`}
+              title={trailer.name}
+              className="w-full h-full rounded-lg"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
     </section>
   );
 }
