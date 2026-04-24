@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 import { apiClient } from "@/lib/api";
 
-const BASE_URL = "https://fym.vercel.app";
+const BASE_URL = "https://fym-jac.vercel.app";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages = [

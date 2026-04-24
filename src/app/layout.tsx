@@ -29,7 +29,7 @@ export const viewport: Viewport = {
 };
 
 const APP_NAME = "FyM - Find Your Movie";
-const APP_URL = "https://fym.vercel.app";
+const APP_URL = "https://fym-jac.vercel.app";
 const APP_DESCRIPTION = "Discover movies and TV shows. Explore trending, popular, top rated content with cast, trailers, and streaming providers.";
 const APP_IMAGE = "/assets/og/og-image.jpg";
 
