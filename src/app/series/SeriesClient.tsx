@@ -22,10 +22,10 @@ interface SeriesClientProps {
     topRated: ApiResponse;
     onTheAir: ApiResponse;
   };
-  allSeries: MediaItem[];
+  popularSeries: MediaItem[];
 }
 
-export default function SeriesClient({ initialData, allSeries }: SeriesClientProps) {
+export default function SeriesClient({ initialData, popularSeries }: SeriesClientProps) {
   const [filters, setFilters] = useState<FilterState>({
     genre: null,
     year: "",
@@ -33,7 +33,7 @@ export default function SeriesClient({ initialData, allSeries }: SeriesClientPro
     sortBy: "popularity.desc",
   });
 
-  const [displayedSeries, setDisplayedSeries] = useState<MediaItem[]>([]);
+  const [displayedSeries, setDisplayedSeries] = useState<MediaItem[]>(popularSeries);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,6 +41,8 @@ export default function SeriesClient({ initialData, allSeries }: SeriesClientPro
   const loaderRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 30;
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [allSeries, setAllSeries] = useState<MediaItem[]>(popularSeries);
+  const [hasLoadedAll, setHasLoadedAll] = useState(false);
 
   const filteredAllSeries = useMemo(() => {
     let items = [...allSeries];
@@ -72,6 +74,34 @@ export default function SeriesClient({ initialData, allSeries }: SeriesClientPro
 
     return items;
   }, [allSeries, filters]);
+
+  const loadMoreSeries = useCallback(async (page: number) => {
+    if (!hasLoadedAll) {
+      setLoading(true);
+      try {
+        const [popular, topRated, onTheAir] = await Promise.all([
+          apiClient.getTvPopular(page),
+          apiClient.getTvTopRated(page),
+          apiClient.getTvOnTheAir(page),
+        ]);
+        
+        const newSeries = [...popular.results, ...topRated.results, ...onTheAir.results];
+        setAllSeries(prev => {
+          const existingIds = new Set(prev.map(s => s.id));
+          const uniqueNew = newSeries.filter(s => !existingIds.has(s.id));
+          return [...prev, ...uniqueNew];
+        });
+        
+        if (page >= 5) {
+          setHasLoadedAll(true);
+        }
+      } catch (error) {
+        console.error("Error loading more series:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }, [hasLoadedAll]);
 
   const fetchDiscoverSeries = useCallback(async (page: number) => {
     if (!filters.genre) return null;
@@ -152,12 +182,13 @@ export default function SeriesClient({ initialData, allSeries }: SeriesClientPro
   }, [filteredAllSeries, filters.genre, loading]);
 
   useEffect(() => {
-    if (!filters.genre) return;
+    if (filters.genre || hasLoadedAll) return;
     
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loading) {
-          fetchDiscoverSeries(currentPage + 1);
+          loadMoreSeries(currentPage + 1);
+          setCurrentPage(prev => prev + 1);
         }
       },
       { threshold: 0.1 }
@@ -168,7 +199,7 @@ export default function SeriesClient({ initialData, allSeries }: SeriesClientPro
     }
 
     return () => observer.disconnect();
-  }, [currentPage, hasMore, loading, filters.genre, fetchDiscoverSeries]);
+  }, [currentPage, hasMore, loading, filters.genre, hasLoadedAll, loadMoreSeries]);
 
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);

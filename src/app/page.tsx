@@ -3,6 +3,7 @@ import HeroBannerWrapper from "@/components/HeroBannerWrapper";
 import MovieRow from "@/components/MovieRow";
 import { apiClient } from "@/lib/api";
 
+export const revalidate = 3600;
 
 async function getData() {
   const [trending, popular, topRated] = await Promise.all([

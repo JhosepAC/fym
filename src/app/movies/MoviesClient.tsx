@@ -22,10 +22,10 @@ interface MoviesClientProps {
     topRated: ApiResponse;
     upcoming: ApiResponse;
   };
-  allMovies: MediaItem[];
+  popularMovies: MediaItem[];
 }
 
-export default function MoviesClient({ initialData, allMovies }: MoviesClientProps) {
+export default function MoviesClient({ initialData, popularMovies }: MoviesClientProps) {
   const [filters, setFilters] = useState<FilterState>({
     genre: null,
     year: "",
@@ -33,7 +33,7 @@ export default function MoviesClient({ initialData, allMovies }: MoviesClientPro
     sortBy: "popularity.desc",
   });
 
-  const [displayedMovies, setDisplayedMovies] = useState<MediaItem[]>([]);
+  const [displayedMovies, setDisplayedMovies] = useState<MediaItem[]>(popularMovies);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,6 +41,8 @@ export default function MoviesClient({ initialData, allMovies }: MoviesClientPro
   const loaderRef = useRef<HTMLDivElement>(null);
   const ITEMS_PER_PAGE = 30;
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [allMovies, setAllMovies] = useState<MediaItem[]>(popularMovies);
+  const [hasLoadedAll, setHasLoadedAll] = useState(false);
 
   const filteredAllMovies = useMemo(() => {
     let items = [...allMovies];
@@ -72,6 +74,34 @@ export default function MoviesClient({ initialData, allMovies }: MoviesClientPro
 
     return items;
   }, [allMovies, filters]);
+
+  const loadMoreMovies = useCallback(async (page: number) => {
+    if (!hasLoadedAll) {
+      setLoading(true);
+      try {
+        const [popular, topRated, upcoming] = await Promise.all([
+          apiClient.getMoviePopular(page),
+          apiClient.getMovieTopRated(page),
+          apiClient.getMovieUpcoming(page),
+        ]);
+        
+        const newMovies = [...popular.results, ...topRated.results, ...upcoming.results];
+        setAllMovies(prev => {
+          const existingIds = new Set(prev.map(m => m.id));
+          const uniqueNew = newMovies.filter(m => !existingIds.has(m.id));
+          return [...prev, ...uniqueNew];
+        });
+        
+        if (page >= 5) {
+          setHasLoadedAll(true);
+        }
+      } catch (error) {
+        console.error("Error loading more movies:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }, [hasLoadedAll]);
 
   const fetchDiscoverMovies = useCallback(async (page: number) => {
     if (!filters.genre) return null;
@@ -152,12 +182,13 @@ export default function MoviesClient({ initialData, allMovies }: MoviesClientPro
   }, [filteredAllMovies, filters.genre, loading]);
 
   useEffect(() => {
-    if (!filters.genre) return;
+    if (filters.genre || hasLoadedAll) return;
     
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loading) {
-          fetchDiscoverMovies(currentPage + 1);
+          loadMoreMovies(currentPage + 1);
+          setCurrentPage(prev => prev + 1);
         }
       },
       { threshold: 0.1 }
@@ -168,7 +199,7 @@ export default function MoviesClient({ initialData, allMovies }: MoviesClientPro
     }
 
     return () => observer.disconnect();
-  }, [currentPage, hasMore, loading, filters.genre, fetchDiscoverMovies]);
+  }, [currentPage, hasMore, loading, filters.genre, hasLoadedAll, loadMoreMovies]);
 
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);
