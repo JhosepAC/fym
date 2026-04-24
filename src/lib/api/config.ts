@@ -36,6 +36,10 @@ export const ENDPOINTS = {
     nowPlaying: "/movie/now_playing",
     details: (id: number) => `/movie/${id}`,
     similar: (id: number) => `/movie/${id}/similar`,
+    recommendations: (id: number) => `/movie/${id}/recommendations`,
+    credits: (id: number) => `/movie/${id}/credits`,
+    watchProviders: (id: number) => `/movie/${id}/watch/providers`,
+    videos: (id: number) => `/movie/${id}/videos`,
   },
   tv: {
     popular: "/tv/popular",
@@ -43,10 +47,21 @@ export const ENDPOINTS = {
     onTheAir: "/tv/on_the_air",
     details: (id: number) => `/tv/${id}`,
     similar: (id: number) => `/tv/${id}/similar`,
+    recommendations: (id: number) => `/tv/${id}/recommendations`,
+    credits: (id: number) => `/tv/${id}/credits`,
+    seasonDetails: (id: number, season: number) => `/tv/${id}/season/${season}`,
+    seasonAggregateCredits: (id: number, season: number) => `/tv/${id}/season/${season}/aggregate_credits`,
+    seasonVideos: (id: number, season: number) => `/tv/${id}/season/${season}/videos`,
+    episodeImages: (id: number, season: number, episode: number) => `/tv/${id}/season/${season}/episode/${episode}/images`,
+    episodeVideos: (id: number, season: number, episode: number) => `/tv/${id}/season/${season}/episode/${episode}/videos`,
+    videos: (id: number) => `/tv/${id}/videos`,
   },
   search: {
     multi: "/search/multi",
     movie: "/search/movie",
     tv: "/search/tv",
+  },
+  collection: {
+    details: (id: number) => `/collection/${id}`,
   },
 } as const;

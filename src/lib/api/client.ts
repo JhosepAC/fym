@@ -58,6 +58,18 @@ class ApiClient {
     return this.fetch<ApiResponse>(ENDPOINTS.movie.similar(id), { page: String(page) });
   }
 
+  async getMovieRecommendations(id: number, page: number = 1) {
+    return this.fetch<ApiResponse>(ENDPOINTS.movie.recommendations(id), { page: String(page) });
+  }
+
+  async getMovieCredits(id: number) {
+    return this.fetch<CreditsResponse>(ENDPOINTS.movie.credits(id));
+  }
+
+  async getMovieWatchProviders(id: number) {
+    return this.fetch<WatchProvidersResponse>(ENDPOINTS.movie.watchProviders(id));
+  }
+
   async getTvPopular(page: number = 1) {
     return this.fetch<ApiResponse>(ENDPOINTS.tv.popular, { page: String(page) });
   }
@@ -72,6 +84,46 @@ class ApiClient {
 
   async getTvDetails(id: number) {
     return this.fetch<TvShowDetail>(ENDPOINTS.tv.details(id));
+  }
+
+  async getTvRecommendations(id: number, page: number = 1) {
+    return this.fetch<ApiResponse>(ENDPOINTS.tv.recommendations(id), { page: String(page) });
+  }
+
+  async getTvCredits(id: number) {
+    return this.fetch<CreditsResponse>(ENDPOINTS.tv.credits(id));
+  }
+
+  async getTvSeasonDetails(id: number, seasonNumber: number) {
+    return this.fetch<TvSeason>(ENDPOINTS.tv.seasonDetails(id, seasonNumber));
+  }
+
+  async getTvSeasonAggregateCredits(id: number, seasonNumber: number) {
+    return this.fetch<SeasonAggregateCredits>(ENDPOINTS.tv.seasonAggregateCredits(id, seasonNumber));
+  }
+
+  async getTvSeasonVideos(id: number, seasonNumber: number) {
+    return this.fetch<VideosResponse>(ENDPOINTS.tv.seasonVideos(id, seasonNumber));
+  }
+
+  async getTvEpisodeImages(id: number, seasonNumber: number, episodeNumber: number) {
+    return this.fetch<EpisodeImagesResponse>(ENDPOINTS.tv.episodeImages(id, seasonNumber, episodeNumber));
+  }
+
+  async getTvEpisodeVideos(id: number, seasonNumber: number, episodeNumber: number) {
+    return this.fetch<VideosResponse>(ENDPOINTS.tv.episodeVideos(id, seasonNumber, episodeNumber));
+  }
+
+  async getMovieVideos(id: number) {
+    return this.fetch<VideosResponse>(ENDPOINTS.movie.videos(id));
+  }
+
+  async getTvVideos(id: number) {
+    return this.fetch<VideosResponse>(ENDPOINTS.tv.videos(id));
+  }
+
+  async getCollectionDetails(id: number) {
+    return this.fetch<Collection>(ENDPOINTS.collection.details(id));
   }
 
   async searchMulti(query: string, page: number = 1) {
@@ -149,6 +201,8 @@ export interface TvShowDetail extends MediaItem {
   episode_run_time: number[];
   genres: { id: number; name: string }[];
   tagline: string;
+  status: string;
+  first_air_date: string;
   seasons: {
     id: number;
     name: string;
@@ -157,6 +211,160 @@ export interface TvShowDetail extends MediaItem {
     poster_path: string | null;
     air_date: string;
   }[];
+}
+
+export interface TvSeason {
+  id: number;
+  name: string;
+  overview: string | null;
+  season_number: number;
+  air_date: string;
+  poster_path: string | null;
+  episodes: TvEpisode[];
+  vote_average: number;
+}
+
+export interface TvEpisode {
+  id: number;
+  name: string;
+  overview: string | null;
+  episode_number: number;
+  season_number: number;
+  runtime: number | null;
+  vote_average: number;
+  vote_count: number;
+  still_path: string | null;
+  air_date: string;
+  crew: TvCrew[];
+  guest_stars: TvGuestStar[];
+}
+
+export interface TvCrew {
+  id: number;
+  name: string;
+  job: string;
+  department: string;
+  profile_path: string | null;
+}
+
+export interface TvGuestStar {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+}
+
+export interface SeasonAggregateCredits {
+  id: number;
+  cast: SeasonCast[];
+  crew: SeasonCrew[];
+}
+
+export interface SeasonCast {
+  id: number;
+  name: string;
+  original_name: string;
+  profile_path: string | null;
+  roles: {
+    character: string;
+    episode_count: number;
+  }[];
+  total_episode_count: number;
+}
+
+export interface SeasonCrew {
+  id: number;
+  name: string;
+  job: string;
+  department: string;
+  profile_path: string | null;
+}
+
+export interface Video {
+  id: string;
+  key: string;
+  name: string;
+  site: string;
+  type: string;
+}
+
+export interface VideosResponse {
+  id: number;
+  results: Video[];
+}
+
+export interface EpisodeImagesResponse {
+  id: number;
+ stills: {
+    aspect_ratio: number;
+    height: number;
+    width: number;
+    file_path: string;
+    vote_average: number;
+    vote_count: number;
+  }[];
+}
+
+export interface Cast {
+  id: number;
+  name: string;
+  original_name: string;
+  character: string;
+  profile_path: string | null;
+  order: number;
+}
+
+export interface Crew {
+  id: number;
+  name: string;
+  original_name: string;
+  job: string;
+  department: string;
+  profile_path: string | null;
+}
+
+export interface CreditsResponse {
+  id: number;
+  cast: Cast[];
+  crew: Crew[];
+}
+
+export interface Collection {
+  id: number;
+  name: string;
+  overview: string | null;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  parts: CollectionPart[];
+}
+
+export interface CollectionPart {
+  id: number;
+  title: string;
+  original_title: string;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  release_date: string;
+  vote_average: number;
+}
+
+export interface WatchProvider {
+  provider_id: number;
+  provider_name: string;
+  logo_path: string | null;
+  display_priority: number;
+}
+
+export interface CountryProviders {
+  link: string;
+  flatrate?: WatchProvider[];
+  rent?: WatchProvider[];
+  buy?: WatchProvider[];
+}
+
+export interface WatchProvidersResponse {
+  id: number;
+  results: Record<string, CountryProviders>;
 }
 
 export const getImageUrl = (path: string | null | undefined, size: string = "w500"): string | null => {
