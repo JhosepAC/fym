@@ -15,36 +15,121 @@ function SearchContent() {
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [results, setResults] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<MediaType>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [showOtherResults, setShowOtherResults] = useState(false);
+  const [otherResults, setOtherResults] = useState<MediaItem[]>([]);
+  const loaderRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  const fetchResults = async (page: number, isLoadMore: boolean = false) => {
     if (!query) {
       setResults([]);
       return;
     }
 
-    const fetchResults = async () => {
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
       setLoading(true);
-      setError(null);
+    }
+    setError(null);
 
-      try {
-        const res = await fetch(
-          `https://api.themoviedb.org/3/search/multi?api_key=057a69a9b8b39aa9ab75e749e7113b80&language=en-US&query=${encodeURIComponent(query)}&page=1&include_adult=false`
-        );
-        const data = await res.json();
+    try {
+      const res = await fetch(
+        `https://api.themoviedb.org/3/search/multi?api_key=057a69a9b8b39aa9ab75e749e7113b80&language=en-US&query=${encodeURIComponent(query)}&page=${page}&include_adult=false`
+      );
+      const data = await res.json();
+      
+      if (isLoadMore) {
+        setResults(prev => [...prev, ...(data.results || [])]);
+      } else {
         setResults(data.results || []);
-      } catch (err) {
-        setError("Failed to fetch results. Please try again.");
-      } finally {
-        setLoading(false);
       }
-    };
+      
+      setCurrentPage(page);
+      setHasMore(data.results && data.results.length > 0 && data.page < data.total_pages);
+    } catch (err) {
+      setError("Failed to fetch results. Please try again.");
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
 
-    const debounce = setTimeout(fetchResults, 300);
+  const loadMoreResults = () => {
+    if (!loadingMore && hasMore && currentPage < 10) {
+      fetchResults(currentPage + 1, true);
+    }
+  };
+
+  const loadOtherResults = async () => {
+    if (showOtherResults || !query) return;
+    setShowOtherResults(true);
+    
+    try {
+      const [movieRes, tvRes] = await Promise.all([
+        fetch(`https://api.themoviedb.org/3/search/movie?api_key=057a69a9b8b39aa9ab75e749e7113b80&language=en-US&query=${encodeURIComponent(query)}&page=1`),
+        fetch(`https://api.themoviedb.org/3/search/tv?api_key=057a69a9b8b39aa9ab75e749e7113b80&language=en-US&query=${encodeURIComponent(query)}&page=1`)
+      ]);
+      
+      const movieData = await movieRes.json();
+      const tvData = await tvRes.json();
+      
+      const combinedResults = [...(movieData.results || []), ...(tvData.results || [])];
+      const uniqueResults = combinedResults.filter((item: MediaItem, index: number, self: MediaItem[]) => 
+        index === self.findIndex((i: MediaItem) => i.id === item.id)
+      );
+      
+      setOtherResults(uniqueResults.slice(0, 20));
+    } catch (err) {
+      console.error("Error loading other results:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (!query) {
+      setResults([]);
+      setCurrentPage(1);
+      setHasMore(true);
+      setShowOtherResults(false);
+      return;
+    }
+
+    const debounce = setTimeout(() => {
+      setCurrentPage(1);
+      setHasMore(true);
+      setShowOtherResults(false);
+      fetchResults(1);
+    }, 300);
     return () => clearTimeout(debounce);
   }, [query]);
+
+  useEffect(() => {
+    if (!hasMore || filteredResults.length < 10) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loadingMore) {
+          if (currentPage >= 10 && hasMore) {
+            loadOtherResults();
+          } else {
+            loadMoreResults();
+          }
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, currentPage, results.length, loadingMore, mediaType]);
 
   const handleSearch = (value: string) => {
     setQuery(value);
@@ -167,16 +252,43 @@ function SearchContent() {
         )}
 
         {!loading && !error && filteredResults.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-            {filteredResults.map((item, idx) => (
-              <SearchCard
-                key={`${item.id}-${item.media_type}-${idx}`}
-                item={item}
-                onClick={() => handleCardClick(item)}
-                onPlayClick={(e) => handlePlayClick(e, item)}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+              {filteredResults.map((item, idx) => (
+                <SearchCard
+                  key={`${item.id}-${item.media_type}-${idx}`}
+                  item={item}
+                  onClick={() => handleCardClick(item)}
+                  onPlayClick={(e) => handlePlayClick(e, item)}
+                />
+              ))}
+            </div>
+
+            <div ref={loaderRef} className="h-24 flex items-center justify-center">
+              {loadingMore && (
+                <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
+              )}
+              {!hasMore && filteredResults.length > 0 && (
+                <p className="text-gray-500">No more results</p>
+              )}
+            </div>
+
+            {showOtherResults && otherResults.length > 0 && (
+              <div className="mt-12">
+                <h3 className="text-white text-2xl font-semibold mb-6">Other Results You May Like</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+                  {otherResults.map((item, idx) => (
+                    <SearchCard
+                      key={`other-${item.id}-${item.media_type}-${idx}`}
+                      item={item}
+                      onClick={() => handleCardClick(item)}
+                      onPlayClick={(e) => handlePlayClick(e, item)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {!loading && !error && query && filteredResults.length === 0 && (
