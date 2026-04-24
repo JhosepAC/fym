@@ -68,7 +68,7 @@ export default function MovieRow({ title, items, autoScrollInterval = 4000 }: Mo
   if (items.length === 0) return null;
 
   return (
-    <section className="relative group py-4">
+    <section className="relative py-4">
       <div className="flex items-center gap-4 mb-5 px-8">
         <h2 className="text-2xl font-bold text-white tracking-wide">{title}</h2>
         <div className="h-px flex-1 bg-gradient-to-r from-red-600 to-transparent opacity-60" />
@@ -81,7 +81,7 @@ export default function MovieRow({ title, items, autoScrollInterval = 4000 }: Mo
             canScrollLeft ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
         >
-          <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+          <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center transition-transform scale-110">
             <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -94,7 +94,7 @@ export default function MovieRow({ title, items, autoScrollInterval = 4000 }: Mo
             canScrollRight ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
         >
-          <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+          <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center transition-transform scale-110">
             <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
@@ -109,7 +109,7 @@ export default function MovieRow({ title, items, autoScrollInterval = 4000 }: Mo
           {items.map((item, index) => (
             <div 
               key={`${item.id}-${index}`} 
-              className="flex-shrink-0 w-48 transform group-hover:scale-105 transition-transform duration-300"
+              className="flex-shrink-0 w-48"
             >
               <MovieCard item={item} />
             </div>
