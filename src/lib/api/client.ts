@@ -164,6 +164,18 @@ class ApiClient {
       page: String(page),
     });
   }
+
+  async getMediaVideos(mediaType: "movie" | "tv", id: number) {
+    const endpoint = mediaType === "movie" 
+      ? ENDPOINTS.movie.videos(id) 
+      : ENDPOINTS.tv.videos(id);
+    return this.fetch<VideosResponse>(endpoint);
+  }
+  
+  async getSearchResults(mediaType: "multi" | "movie" | "tv", query: string, page: number = 1) {
+    const endpoint = ENDPOINTS.search[mediaType];
+    return this.fetch<ApiResponse>(endpoint, { query, page: String(page) });
+  }
 }
 
 export interface ApiResponse {
