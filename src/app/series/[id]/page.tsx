@@ -488,7 +488,7 @@ export default function SeriesDetailsPage() {
                         {actor.profile_path ? (
                           <div className="relative w-32 h-40">
                             <Image
-                              src={getImageUrl(actor.profile_path, IMAGE_SIZES.profile.medium) || ""}
+                              src={getImageUrl(actor.profile_path, IMAGE_SIZES.profile.original) || ""}
                               alt={actor.name || ""}
                               fill
                               className="object-cover"
@@ -561,7 +561,7 @@ export default function SeriesDetailsPage() {
                             onClick={() => setShowSeasonPosterModal(true)}
                           >
                             <Image
-                              src={getImageUrl(seasonDetails.poster_path, IMAGE_SIZES.poster.large) || ""}
+                              src={getImageUrl(seasonDetails.poster_path, IMAGE_SIZES.poster.original) || ""}
                               alt={seasonDetails.name || ""}
                               fill
                               className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -660,7 +660,7 @@ export default function SeriesDetailsPage() {
                           >
                             {episode.still_path ? (
                               <Image
-                                src={getImageUrl(episode.still_path, IMAGE_SIZES.backdrop.medium) || ""}
+                                src={getImageUrl(episode.still_path, IMAGE_SIZES.backdrop.original) || ""}
                                 alt={episode.name || ""}
                                 fill
                                 className="object-cover group-hover:scale-110 transition-transform duration-700"
@@ -753,7 +753,7 @@ export default function SeriesDetailsPage() {
                       {member.profile_path ? (
                         <div className="relative w-16 h-16 mb-3 mx-auto">
                           <Image
-                            src={getImageUrl(member.profile_path, IMAGE_SIZES.profile.medium) || ""}
+                            src={getImageUrl(member.profile_path, IMAGE_SIZES.profile.original) || ""}
                             alt={member.name || ""}
                             fill
                             className="object-cover rounded-full"
@@ -788,7 +788,7 @@ export default function SeriesDetailsPage() {
                       {rec.poster_path ? (
                         <div className="relative aspect-[2/3]">
                           <Image
-                            src={getImageUrl(rec.poster_path, IMAGE_SIZES.poster.medium) || ""}
+                            src={getImageUrl(rec.poster_path, IMAGE_SIZES.poster.original) || ""}
                             alt={rec.name || ""}
                             fill
                             className="object-cover"
@@ -889,7 +889,7 @@ export default function SeriesDetailsPage() {
               </svg>
             </button>
             <Image
-              src={getImageUrl(seasonDetails.poster_path, IMAGE_SIZES.poster.large) || ""}
+              src={getImageUrl(seasonDetails.poster_path, IMAGE_SIZES.poster.original) || ""}
               alt={seasonDetails.name || ""}
               width={500}
               height={750}
@@ -1002,7 +1002,7 @@ export default function SeriesDetailsPage() {
                         {actor.profile_path ? (
                           <div className="relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden">
                             <Image
-                              src={getImageUrl(actor.profile_path, IMAGE_SIZES.profile.medium) || ""}
+                              src={getImageUrl(actor.profile_path, IMAGE_SIZES.profile.original) || ""}
                               alt={actor.name || ""}
                               fill
                               className="object-cover"
@@ -1037,7 +1037,7 @@ export default function SeriesDetailsPage() {
                         {member.profile_path ? (
                           <div className="relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden">
                             <Image
-                              src={getImageUrl(member.profile_path, IMAGE_SIZES.profile.medium) || ""}
+                              src={getImageUrl(member.profile_path, IMAGE_SIZES.profile.original) || ""}
                               alt={member.name || ""}
                               fill
                               className="object-cover"
@@ -1240,7 +1240,7 @@ export default function SeriesDetailsPage() {
                         className="group relative aspect-video rounded-xl overflow-hidden bg-gray-800"
                       >
                         <Image
-                          src={getImageUrl(image.file_path, IMAGE_SIZES.backdrop.large) || ""}
+                          src={getImageUrl(image.file_path, IMAGE_SIZES.backdrop.original) || ""}
                           alt={`Still ${idx + 1}`}
                           fill
                           className="object-cover group-hover:scale-110 transition-transform duration-500"

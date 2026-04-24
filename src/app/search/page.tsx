@@ -220,7 +220,7 @@ function SearchCard({
   const [imageError, setImageError] = useState(false);
 
   const title = item.title || item.name || "Untitled";
-  const posterUrl = getImageUrl(item.poster_path, IMAGE_SIZES.poster.large);
+  const posterUrl = getImageUrl(item.poster_path, IMAGE_SIZES.poster.original);
   const rating = item.vote_average ? item.vote_average.toFixed(1) : "N/A";
   const year = item.release_date?.split("-")[0] || item.first_air_date?.split("-")[0] || "N/A";
   const mediaTypeLabel = item.media_type === "tv" ? "TV Series" : "Movie";

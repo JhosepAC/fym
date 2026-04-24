@@ -472,7 +472,7 @@ export default function MovieDetailsPage() {
                     {actor.profile_path ? (
                       <div className="relative w-32 h-40">
                         <Image
-                          src={getImageUrl(actor.profile_path, IMAGE_SIZES.profile.medium) || ""}
+                          src={getImageUrl(actor.profile_path, IMAGE_SIZES.profile.original) || ""}
                           alt={actor.name || ""}
                           fill
                           className="object-cover"
@@ -518,7 +518,7 @@ export default function MovieDetailsPage() {
                   {member.profile_path ? (
                     <div className="relative w-16 h-16 mb-3 mx-auto">
                       <Image
-                        src={getImageUrl(member.profile_path, IMAGE_SIZES.profile.medium) || ""}
+                        src={getImageUrl(member.profile_path, IMAGE_SIZES.profile.original) || ""}
                         alt={member.name || ""}
                         fill
                         className="object-cover rounded-full"
@@ -553,7 +553,7 @@ export default function MovieDetailsPage() {
                   {rec.poster_path ? (
                     <div className="relative aspect-[2/3]">
                       <Image
-                        src={getImageUrl(rec.poster_path, IMAGE_SIZES.poster.medium) || ""}
+                        src={getImageUrl(rec.poster_path, IMAGE_SIZES.poster.original) || ""}
                         alt={rec.title || ""}
                         fill
                         className="object-cover"

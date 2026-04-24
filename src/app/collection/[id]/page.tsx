@@ -67,8 +67,8 @@ export default function CollectionDetailsPage() {
     );
   }
 
-  const backdropUrl = getImageUrl(collection.backdrop_path, IMAGE_SIZES.backdrop.large);
-  const posterUrl = getImageUrl(collection.poster_path, IMAGE_SIZES.poster.large);
+  const backdropUrl = getImageUrl(collection.backdrop_path, IMAGE_SIZES.backdrop.original);
+  const posterUrl = getImageUrl(collection.poster_path, IMAGE_SIZES.poster.original);
 
   return (
     <div className="min-h-screen bg-[#0a0a0b]">
@@ -148,7 +148,7 @@ export default function CollectionDetailsPage() {
                         {part.backdrop_path ? (
                           <div className="relative h-32">
                             <Image
-                              src={getImageUrl(part.backdrop_path, IMAGE_SIZES.backdrop.small) || ""}
+                              src={getImageUrl(part.backdrop_path, IMAGE_SIZES.backdrop.original) || ""}
                               alt={part.title}
                               fill
                               className="object-cover"
