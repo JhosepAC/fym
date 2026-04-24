@@ -14,7 +14,6 @@ export default function MovieRow({ title, items, autoScrollInterval = 4000 }: Mo
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
-  const [isHovered, setIsHovered] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const CARD_WIDTH = 192;
@@ -50,7 +49,7 @@ export default function MovieRow({ title, items, autoScrollInterval = 4000 }: Mo
   }, []);
 
   useEffect(() => {
-    if (autoScrollInterval <= 0 || isHovered || isTransitioning) return;
+    if (autoScrollInterval <= 0 || isTransitioning) return;
 
     const interval = setInterval(() => {
       if (!scrollRef.current) return;
@@ -64,7 +63,7 @@ export default function MovieRow({ title, items, autoScrollInterval = 4000 }: Mo
     }, autoScrollInterval);
 
     return () => clearInterval(interval);
-  }, [autoScrollInterval, isHovered, isTransitioning]);
+  }, [autoScrollInterval, isTransitioning]);
 
   if (items.length === 0) return null;
 
@@ -75,11 +74,7 @@ export default function MovieRow({ title, items, autoScrollInterval = 4000 }: Mo
         <div className="h-px flex-1 bg-gradient-to-r from-red-600 to-transparent opacity-60" />
       </div>
       
-      <div
-        className="relative"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
+      <div className="relative">
         <button
           onClick={() => scroll("left")}
           className={`absolute left-0 top-0 bottom-0 z-20 w-12 md:w-16 bg-gradient-to-r from-[#0a0a0b] via-[#0a0a0b]/70 to-transparent flex items-center justify-center transition-all duration-300 hover:bg-white/10 ${
@@ -115,24 +110,12 @@ export default function MovieRow({ title, items, autoScrollInterval = 4000 }: Mo
             <div 
               key={`${item.id}-${index}`} 
               className="flex-shrink-0 w-48 transform group-hover:scale-105 transition-transform duration-300"
-              style={{ 
-                animation: !isHovered && index === 0 ? 'subtle-pulse 2s infinite' : 'none'
-              }}
             >
               <MovieCard item={item} />
             </div>
           ))}
         </div>
-
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-sm" />
       </div>
-
-      <style jsx>{`
-        @keyframes subtle-pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.02); }
-        }
-      `}</style>
     </section>
   );
 }
