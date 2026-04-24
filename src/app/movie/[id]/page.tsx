@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import { apiClient, getImageUrl, IMAGE_SIZES, TMDB_CONFIG } from "@/lib/api";
-import { MovieDetail, Video, MediaItem, Cast, Crew, WatchProvider } from "@/lib/api/client";
+import { MovieDetail, Video, MediaItem, Cast, Crew, WatchProvider, Collection } from "@/lib/api/client";
 
 export default function MovieDetailsPage() {
   const params = useParams();
@@ -30,6 +30,7 @@ export default function MovieDetailsPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [showOtherResults, setShowOtherResults] = useState(false);
   const [otherResults, setOtherResults] = useState<MediaItem[]>([]);
+  const [collectionCount, setCollectionCount] = useState<number | null>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
   const overviewRef = React.useRef<HTMLParagraphElement>(null);
   const castScrollRef = React.useRef<HTMLDivElement>(null);
@@ -53,14 +54,22 @@ export default function MovieDetailsPage() {
 
       try {
         setLoading(true);
-        const [movieData, videosData, recommendationsData, creditsData, watchProvidersData] = await Promise.all([
-          apiClient.getMovieDetails(movieId),
+        const movieData = await apiClient.getMovieDetails(movieId);
+        setMovie(movieData);
+        
+        let collectionPartsCount: number | null = null;
+        if (movieData.belongs_to_collection) {
+          const collectionData = await apiClient.getCollectionDetails(movieData.belongs_to_collection.id);
+          collectionPartsCount = collectionData.parts.length;
+          setCollectionCount(collectionPartsCount);
+        }
+
+        const [videosData, recommendationsData, creditsData, watchProvidersData] = await Promise.all([
           apiClient.getMovieVideos(movieId),
           apiClient.getMovieRecommendations(movieId),
           apiClient.getMovieCredits(movieId),
           apiClient.getMovieWatchProviders(movieId),
         ]);
-        setMovie(movieData);
         setVideos(videosData.results || []);
         setRecommendations(recommendationsData.results || []);
         setCast(creditsData.cast || []);
@@ -306,13 +315,50 @@ export default function MovieDetailsPage() {
               </div>
 
               {movie.belongs_to_collection && (
-                <Link
-                  href={`/collection/${movie.belongs_to_collection.id}`}
-                  className="mt-6 p-4 bg-gradient-to-br from-gray-800/60 to-gray-900/60 backdrop-blur-sm rounded-xl border border-gray-700/50 hover:border-red-500/50 transition-colors block"
-                >
-                  <p className="text-gray-400 text-xs uppercase tracking-wider mb-2">Part of</p>
-                  <p className="text-white font-semibold hover:text-red-400 transition-colors">{movie.belongs_to_collection.name}</p>
-                </Link>
+                <div className="mt-6 group relative overflow-hidden rounded-xl border border-gray-700/50 hover:border-red-500/50 transition-all duration-300">
+                  <div className="absolute inset-0">
+                    {movie.belongs_to_collection.backdrop_path && (
+                      <Image
+                        src={getImageUrl(movie.belongs_to_collection.backdrop_path, IMAGE_SIZES.backdrop.original) || ""}
+                        alt={movie.belongs_to_collection.name || ""}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-500"
+                      />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-r from-gray-900/95 via-gray-900/80 to-gray-900/40" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-transparent to-transparent" />
+                  </div>
+                  
+                  <div className="relative z-10 p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2 py-0.5 bg-red-600/80 text-white text-xs font-medium rounded-full uppercase tracking-wider backdrop-blur-sm">
+                        Collection
+                      </span>
+                      {collectionCount !== null && (
+                        <span className="text-gray-400 text-xs">
+                          {collectionCount} {collectionCount === 1 ? "movie" : "movies"}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <h3 className="text-white text-lg font-bold mb-3">
+                      {movie.belongs_to_collection.name}
+                    </h3>
+                    
+                    <Link
+                      href={`/collection/${movie.belongs_to_collection.id}`}
+                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold rounded-lg transition-all duration-300 hover:shadow-[0_0_15px_rgba(220,38,38,0.5)] group/btn"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                      View Collection
+                      <svg className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </div>
+                </div>
               )}
             </div>
 
