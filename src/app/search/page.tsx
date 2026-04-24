@@ -336,6 +336,7 @@ function SearchCard({
   const rating = item.vote_average ? item.vote_average.toFixed(1) : "N/A";
   const year = item.release_date?.split("-")[0] || item.first_air_date?.split("-")[0] || "N/A";
   const mediaTypeLabel = item.media_type === "tv" ? "TV Series" : "Movie";
+  const isPremium = item.id === 103 && item.media_type === "movie";
 
   return (
     <div
@@ -344,7 +345,7 @@ function SearchCard({
       onMouseLeave={() => setIsHovered(false)}
       onClick={onClick}
     >
-      <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-gray-900 transition-all duration-500 group-hover:scale-[1.02] group-hover:shadow-2xl group-hover:shadow-red-500/20">
+      <div className={`relative aspect-[2/3] rounded-xl overflow-hidden bg-gray-900 transition-all duration-500 group-hover:scale-[1.02] group-hover:shadow-2xl ${isPremium ? "group-hover:shadow-amber-500/40" : "group-hover:shadow-red-500/20"} ${isPremium ? "ring-2 ring-amber-500/50" : ""}`}>
         {posterUrl && !imageError ? (
           <Image
             src={posterUrl}
@@ -363,7 +364,7 @@ function SearchCard({
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
         <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-start justify-between px-3 pt-3">
-          <span className="bg-red-600 text-white text-xs font-bold px-2 py-0.5 rounded">
+          <span className={`text-xs font-bold px-2 py-0.5 rounded ${isPremium ? "bg-amber-500 text-black" : "bg-red-600 text-white"}`}>
             {mediaTypeLabel}
           </span>
           <div className="flex items-center gap-1 bg-black/60 backdrop-blur-sm px-2 py-1 rounded">
@@ -381,7 +382,9 @@ function SearchCard({
             <p className="text-gray-300 text-sm line-clamp-3 mb-4">{item.overview || "No description available."}</p>
             <div className="flex gap-3">
               <button
-                className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white py-2.5 rounded-lg text-sm font-bold hover:from-red-500 hover:to-red-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-600/40"
+                className={`flex-1 text-white py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-lg ${isPremium 
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 shadow-amber-500/40" 
+                  : "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 shadow-red-600/40"}`}
                 onClick={onClick}
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -390,7 +393,7 @@ function SearchCard({
                 Ver más
               </button>
               <button
-                className="p-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 hover:border-white/40 transition-all"
+                className={`p-2.5 rounded-lg transition-all ${isPremium ? "bg-amber-500/20 backdrop-blur-sm border border-amber-500/50 text-amber-400 hover:bg-amber-500/30 hover:border-amber-400" : "bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 hover:border-white/40"}`}
                 onClick={onPlayClick}
                 title="Reproducir trailer"
               >
@@ -404,7 +407,7 @@ function SearchCard({
       </div>
 
       <div className="mt-3">
-        <h3 className="text-white font-medium text-sm line-clamp-2 group-hover:text-red-500 transition-colors">
+        <h3 className={`font-medium text-sm line-clamp-2 transition-colors ${isPremium ? "group-hover:text-amber-400" : "group-hover:text-red-500"}`}>
           {title}
         </h3>
         <p className="text-gray-500 text-xs mt-1">{year}</p>
