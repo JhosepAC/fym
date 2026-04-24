@@ -12,28 +12,14 @@ async function getData() {
   return { trending, popular, topRated, upcoming };
 }
 
-async function getAllMovies() {
-  const allMovies: Map<number, any> = new Map();
-  const totalPages = 20;
-  
-  for (let page = 1; page <= totalPages; page++) {
-    const [popular, topRated, upcoming] = await Promise.all([
-      apiClient.getMoviePopular(page),
-      apiClient.getMovieTopRated(page),
-      apiClient.getMovieUpcoming(page),
-    ]);
-    
-    [...popular.results, ...topRated.results, ...upcoming.results].forEach((movie: any) => {
-      if (!allMovies.has(movie.id)) {
-        allMovies.set(movie.id, movie);
-      }
-    });
-  }
-  
-  return Array.from(allMovies.values());
+async function getPopularMovies(page: number = 1) {
+  return apiClient.getMoviePopular(page);
 }
 
+export const revalidate = 3600;
+
 export default async function MoviesPage() {
-  const [initialData, allMovies] = await Promise.all([getData(), getAllMovies()]);
-  return <MoviesClient initialData={initialData} allMovies={allMovies} />;
+  const initialData = await getData();
+  const popularMovies = await getPopularMovies(1);
+  return <MoviesClient initialData={initialData} popularMovies={popularMovies.results} />;
 }
