@@ -1,31 +1,47 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import { apiClient, getImageUrl, IMAGE_SIZES, TMDB_CONFIG } from "@/lib/api";
-import { MovieDetail, Video, MediaItem, Cast, Crew } from "@/lib/api/client";
+import { MovieDetail, Video, MediaItem, Cast, Crew, WatchProvider } from "@/lib/api/client";
 
 export default function MovieDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [movie, setMovie] = useState<MovieDetail | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [recommendations, setRecommendations] = useState<MediaItem[]>([]);
   const [cast, setCast] = useState<Cast[]>([]);
   const [crew, setCrew] = useState<Crew[]>([]);
+  const [watchProviders, setWatchProviders] = useState<WatchProvider[]>([]);
+  const [externalLink, setExternalLink] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFullOverview, setShowFullOverview] = useState(false);
   const [showReadMore, setShowReadMore] = useState(false);
   const [showPosterModal, setShowPosterModal] = useState(false);
   const [showTrailerModal, setShowTrailerModal] = useState(false);
+  const [recommendationsPage, setRecommendationsPage] = useState(1);
+  const [hasMoreRecommendations, setHasMoreRecommendations] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [showOtherResults, setShowOtherResults] = useState(false);
+  const [otherResults, setOtherResults] = useState<MediaItem[]>([]);
+  const loaderRef = useRef<HTMLDivElement>(null);
   const overviewRef = React.useRef<HTMLParagraphElement>(null);
   const castScrollRef = React.useRef<HTMLDivElement>(null);
 
   const movieId = Number(params.id);
+  const shouldPlayTrailer = searchParams.get("play") === "true";
+
+  useEffect(() => {
+    if (shouldPlayTrailer && videos.length > 0) {
+      setShowTrailerModal(true);
+    }
+  }, [shouldPlayTrailer, videos]);
 
   useEffect(() => {
     async function fetchMovie() {
@@ -37,17 +53,25 @@ export default function MovieDetailsPage() {
 
       try {
         setLoading(true);
-        const [movieData, videosData, recommendationsData, creditsData] = await Promise.all([
+        const [movieData, videosData, recommendationsData, creditsData, watchProvidersData] = await Promise.all([
           apiClient.getMovieDetails(movieId),
           apiClient.getMovieVideos(movieId),
           apiClient.getMovieRecommendations(movieId),
           apiClient.getMovieCredits(movieId),
+          apiClient.getMovieWatchProviders(movieId),
         ]);
         setMovie(movieData);
         setVideos(videosData.results || []);
         setRecommendations(recommendationsData.results || []);
         setCast(creditsData.cast || []);
         setCrew(creditsData.crew || []);
+        
+        const countryCode = "PE";
+        const providers = watchProvidersData.results?.[countryCode];
+        if (providers) {
+          setWatchProviders(providers.flatrate || []);
+          setExternalLink(providers.link || null);
+        }
       } catch (err) {
         setError("Failed to load movie details");
       } finally {
@@ -57,6 +81,62 @@ export default function MovieDetailsPage() {
 
     fetchMovie();
   }, [movieId]);
+
+  const loadMoreRecommendations = useCallback(async () => {
+    if (loadingMore || !hasMoreRecommendations) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = recommendationsPage + 1;
+      const data = await apiClient.getMovieRecommendations(movieId, nextPage);
+      if (data.results && data.results.length > 0) {
+        setRecommendations(prev => [...prev, ...data.results]);
+        setRecommendationsPage(nextPage);
+        if (data.results.length < 20 || nextPage >= 3) {
+          setHasMoreRecommendations(false);
+        }
+      } else {
+        setHasMoreRecommendations(false);
+      }
+    } catch (error) {
+      console.error("Error loading more recommendations:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [movieId, recommendationsPage, loadingMore, hasMoreRecommendations]);
+
+  const loadOtherResults = useCallback(async () => {
+    if (showOtherResults) return;
+    setShowOtherResults(true);
+    try {
+      const data = await apiClient.getMovieSimilar(movieId, 1);
+      setOtherResults(data.results || []);
+    } catch (error) {
+      console.error("Error loading similar movies:", error);
+    }
+  }, [movieId, showOtherResults]);
+
+  useEffect(() => {
+    if (!hasMoreRecommendations || recommendations.length < 10) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loadingMore) {
+          if (recommendationsPage >= 3 && hasMoreRecommendations) {
+            loadOtherResults();
+          } else {
+            loadMoreRecommendations();
+          }
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMoreRecommendations, recommendationsPage, loadingMore, recommendations.length, loadMoreRecommendations, loadOtherResults]);
 
   useEffect(() => {
     if (movie && overviewRef.current) {
@@ -75,6 +155,21 @@ export default function MovieDetailsPage() {
     (v) => v.type === "Trailer" && v.site === "YouTube"
   );
   const trailerUrl = trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null;
+
+  const getProviderLink = (providerName: string) => {
+    const searchQuery = encodeURIComponent(movie?.title || "");
+    const links: Record<string, string> = {
+      "Netflix": `https://www.netflix.com/search?q=${searchQuery}`,
+      "Disney Plus": `https://www.disneyplus.com/search?q=${searchQuery}`,
+      "HBO Max": `https://www.max.com/search?q=${searchQuery}`,
+      "Amazon Prime Video": `https://www.primevideo.com/search?q=${searchQuery}`,
+      "Apple TV+": `https://tv.apple.com/us/search?q=${searchQuery}`,
+      "Hulu": `https://www.hulu.com/search?q=${searchQuery}`,
+      "Peacock": `https://www.peacocktv.com/search?q=${searchQuery}`,
+      "Paramount+": `https://www.paramountplus.com/search?q=${searchQuery}`,
+    };
+    return links[providerName] || "#";
+  };
 
   if (loading) {
     return (
@@ -104,8 +199,8 @@ export default function MovieDetailsPage() {
     );
   }
 
-  const posterUrl = getImageUrl(movie.poster_path, IMAGE_SIZES.poster.large);
-  const backdropUrl = getImageUrl(movie.backdrop_path, IMAGE_SIZES.backdrop.original);
+  const posterUrl = getImageUrl(movie.poster_path, IMAGE_SIZES.poster.original);
+  const backdropUrl = getImageUrl(movie.backdrop_path, IMAGE_SIZES.backdrop.ultra);
   const rating = movie.vote_average?.toFixed(1) || "N/A";
 
   const formatRuntime = (minutes: number) => {
@@ -144,10 +239,10 @@ export default function MovieDetailsPage() {
   };
 
   const getRatingColor = (rating: number) => {
-    if (rating >= 7.5) return "text-green-400";
+    if (rating >= 7.5) return "text-yellow-400";
     if (rating >= 6.0) return "text-yellow-400";
-    if (rating >= 4.0) return "text-orange-400";
-    return "text-red-400";
+    if (rating >= 4.0) return "text-yellow-400";
+    return "text-yellow-400";
   };
 
   return (
@@ -183,7 +278,7 @@ export default function MovieDetailsPage() {
           <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
             <div className="flex-shrink-0">
               <div 
-                className="w-64 lg:w-80 rounded-xl overflow-hidden cursor-pointer"
+                className="relative w-64 lg:w-80 rounded-xl overflow-hidden cursor-pointer group"
                 onClick={() => posterUrl && setShowPosterModal(true)}
               >
                 {posterUrl ? (
@@ -192,11 +287,20 @@ export default function MovieDetailsPage() {
                     alt={movie.title || ""}
                     width={320}
                     height={480}
-                    className="w-full h-auto"
+                    className="w-full h-auto group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
                   <div className="w-80 h-[480px] bg-gray-800 flex items-center justify-center">
                     <span className="text-gray-500">No Image</span>
+                  </div>
+                )}
+                {posterUrl && (
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center">
+                      <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                      </svg>
+                    </div>
                   </div>
                 )}
               </div>
@@ -370,6 +474,36 @@ export default function MovieDetailsPage() {
                   </button>
                 )}
               </div>
+
+              {watchProviders.length > 0 && (
+                <div className="mt-10">
+                  <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-4">Watch On</h3>
+                  <div className="flex flex-wrap items-center gap-4">
+                    {watchProviders.slice(0, 6).map((provider, idx) => (
+                      <a
+                        key={`${provider.provider_id}-${idx}`}
+                        href={getProviderLink(provider.provider_name)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group relative"
+                        title={`Watch on ${provider.provider_name}`}
+                      >
+                        {provider.logo_path ? (
+                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-800 border border-gray-700 hover:border-red-500 transition-all duration-300">
+                            <Image
+                              src={`${TMDB_CONFIG.IMAGE_BASE_URL}/w92${provider.logo_path}`}
+                              alt={provider.provider_name}
+                              width={40}
+                              height={40}
+                              className="object-contain w-full h-full"
+                            />
+                          </div>
+                        ) : null}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             </div>
@@ -400,7 +534,7 @@ export default function MovieDetailsPage() {
                     {actor.profile_path ? (
                       <div className="relative w-32 h-40">
                         <Image
-                          src={getImageUrl(actor.profile_path, IMAGE_SIZES.profile.medium) || ""}
+                          src={getImageUrl(actor.profile_path, IMAGE_SIZES.profile.original) || ""}
                           alt={actor.name || ""}
                           fill
                           className="object-cover"
@@ -441,12 +575,12 @@ export default function MovieDetailsPage() {
             {crew
               .filter((member) => ["Director", "Screenplay", "Writer", "Producer", "Executive Producer", "Original Story"].includes(member.job))
               .slice(0, 5)
-              .map((member) => (
-                <div key={member.id} className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/30 hover:border-red-500/50 transition-all duration-300">
+              .map((member, idx) => (
+                <div key={`${member.id}-${member.job}-${idx}`} className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/30 hover:border-red-500/50 transition-all duration-300">
                   {member.profile_path ? (
                     <div className="relative w-16 h-16 mb-3 mx-auto">
                       <Image
-                        src={getImageUrl(member.profile_path, IMAGE_SIZES.profile.medium) || ""}
+                        src={getImageUrl(member.profile_path, IMAGE_SIZES.profile.original) || ""}
                         alt={member.name || ""}
                         fill
                         className="object-cover rounded-full"
@@ -471,9 +605,9 @@ export default function MovieDetailsPage() {
         <div className="px-6 lg:px-12 pb-12 max-w-7xl mx-auto">
           <h3 className="text-white text-2xl font-semibold mb-6">Recommended Movies</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {recommendations.slice(0, 10).map((rec) => (
+            {recommendations.map((rec, idx) => (
               <Link
-                key={rec.id}
+                key={`${rec.id}-${idx}`}
                 href={`/movie/${rec.id}`}
                 className="group"
               >
@@ -481,7 +615,7 @@ export default function MovieDetailsPage() {
                   {rec.poster_path ? (
                     <div className="relative aspect-[2/3]">
                       <Image
-                        src={getImageUrl(rec.poster_path, IMAGE_SIZES.poster.medium) || ""}
+                        src={getImageUrl(rec.poster_path, IMAGE_SIZES.poster.original) || ""}
                         alt={rec.title || ""}
                         fill
                         className="object-cover"
@@ -502,6 +636,53 @@ export default function MovieDetailsPage() {
               </Link>
             ))}
           </div>
+
+          <div ref={loaderRef} className="h-24 flex items-center justify-center">
+            {loadingMore && (
+              <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
+            )}
+            {!hasMoreRecommendations && recommendations.length > 0 && (
+              <p className="text-gray-500">No more recommendations</p>
+            )}
+          </div>
+
+          {showOtherResults && otherResults.length > 0 && (
+            <div className="mt-12">
+              <h3 className="text-white text-2xl font-semibold mb-6">Other Results You May Like</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {otherResults.map((rec, idx) => (
+                  <Link
+                    key={`other-${rec.id}-${idx}`}
+                    href={`/movie/${rec.id}`}
+                    className="group"
+                  >
+                    <div className="bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/30 hover:border-red-500/50 transition-all duration-300 hover:scale-105">
+                      {rec.poster_path ? (
+                        <div className="relative aspect-[2/3]">
+                          <Image
+                            src={getImageUrl(rec.poster_path, IMAGE_SIZES.poster.original) || ""}
+                            alt={rec.title || ""}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-[2/3] bg-gray-800" />
+                      )}
+                      <div className="p-3">
+                        <p className="text-white text-sm font-medium truncate group-hover:text-red-400 transition-colors">
+                          {rec.title}
+                        </p>
+                        <p className="text-gray-500 text-xs">
+                          {rec.vote_average?.toFixed(1)} ★
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
