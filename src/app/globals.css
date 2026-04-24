@@ -148,3 +148,32 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+.gold-gradient {
+  background: linear-gradient(135deg, #FFD700 0%, #F4B400 25%, #FFD700 50%, #F4B400 75%, #FFD700 100%);
+  background-size: 200% 200%;
+}
+
+.gold-text {
+  background: linear-gradient(135deg, #FFD700 0%, #F4B400 50%, #FFD700 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gold-glow {
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4), 0 0 40px rgba(255, 215, 0, 0.2);
+}
+
+.gold-border {
+  border: 1px solid rgba(255, 215, 0, 0.4);
+}
+
+.gold-border-hover:hover {
+  border-color: rgba(255, 215, 0, 0.8);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+}
+
+.premium-fade {
+  background: linear-gradient(180deg, #0a0a0b 0%, #1a1510 30%, #1a1510 70%, #0a0a0b 100%);
+}
