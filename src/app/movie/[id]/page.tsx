@@ -36,6 +36,7 @@ export default function MovieDetailsPage() {
   const castScrollRef = React.useRef<HTMLDivElement>(null);
 
   const movieId = Number(params.id);
+  const isPremiumMovie = movieId === 103;
   const shouldPlayTrailer = searchParams.get("play") === "true";
 
   useEffect(() => {
@@ -248,14 +249,23 @@ export default function MovieDetailsPage() {
   };
 
   const getRatingColor = (rating: number) => {
+    if (isPremiumMovie) {
+      if (rating >= 7.5) return "text-amber-300";
+      if (rating >= 6.0) return "text-amber-400";
+      return "text-amber-500";
+    }
     if (rating >= 7.5) return "text-yellow-400";
     if (rating >= 6.0) return "text-yellow-400";
     if (rating >= 4.0) return "text-yellow-400";
     return "text-yellow-400";
   };
 
+  const getPremiumAccent = (defaultClass: string, premiumClass: string) => {
+    return isPremiumMovie ? premiumClass : defaultClass;
+  };
+
   return (
-    <div className="min-h-screen bg-[#0a0a0b]">
+    <div className={isPremiumMovie ? "min-h-screen bg-gradient-to-br from-[#0a0a0b] via-[#1a1510] to-[#0a0a0b]" : "min-h-screen bg-[#0a0a0b]"}>
       <Navbar transparent={false} />
 
       <div className="relative">
@@ -270,6 +280,9 @@ export default function MovieDetailsPage() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0b] via-[#0a0a0b]/70 via-40% to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0b]/80 via-transparent to-transparent" />
+            {isPremiumMovie && (
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#1a1510]/50" />
+            )}
           </div>
         )}
 
@@ -287,7 +300,7 @@ export default function MovieDetailsPage() {
           <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
             <div className="flex-shrink-0">
               <div 
-                className="relative w-64 lg:w-80 rounded-xl overflow-hidden cursor-pointer group"
+                className={`relative w-64 lg:w-80 rounded-xl overflow-hidden cursor-pointer group transition-all duration-500 ${isPremiumMovie ? "ring-2 ring-amber-400/50 hover:ring-amber-400 hover:shadow-[0_0_30px_rgba(251,191,36,0.4)]" : ""}`}
                 onClick={() => posterUrl && setShowPosterModal(true)}
               >
                 {posterUrl ? (
@@ -305,17 +318,20 @@ export default function MovieDetailsPage() {
                 )}
                 {posterUrl && (
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center">
+                    <div className={`w-14 h-14 rounded-full flex items-center justify-center ${isPremiumMovie ? "bg-amber-500" : "bg-red-600"}`}>
                       <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
                       </svg>
                     </div>
                   </div>
                 )}
+                {isPremiumMovie && (
+                  <div className="absolute inset-0 rounded-xl border-2 border-amber-400/30 pointer-events-none" />
+                )}
               </div>
 
               {movie.belongs_to_collection && (
-                <div className="mt-6 group relative overflow-hidden rounded-xl border border-gray-700/50 hover:border-red-500/50 transition-all duration-300">
+                <div className={`mt-6 group relative overflow-hidden rounded-xl border transition-all duration-300 ${isPremiumMovie ? "border-amber-600/30 hover:border-amber-500/60" : "border-gray-700/50 hover:border-red-500/50"}`}>
                   <div className="absolute inset-0">
                     {movie.belongs_to_collection.backdrop_path && (
                       <Image
@@ -331,7 +347,7 @@ export default function MovieDetailsPage() {
                   
                   <div className="relative z-10 p-5">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="px-2 py-0.5 bg-red-600/80 text-white text-xs font-medium rounded-full uppercase tracking-wider backdrop-blur-sm">
+                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full uppercase tracking-wider backdrop-blur-sm ${isPremiumMovie ? "bg-amber-600/80 text-white" : "bg-red-600/80 text-white"}`}>
                         Collection
                       </span>
                       {collectionCount !== null && (
@@ -347,7 +363,7 @@ export default function MovieDetailsPage() {
                     
                     <Link
                       href={`/collection/${movie.belongs_to_collection.id}`}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold rounded-lg transition-all duration-300 hover:shadow-[0_0_15px_rgba(220,38,38,0.5)] group/btn"
+                      className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 hover:shadow-[0_0_15px_rgba(220,38,38,0.5)] group/btn ${isPremiumMovie ? "bg-amber-500 hover:bg-amber-400 text-black hover:shadow-[0_0_15px_rgba(251,191,36,0.5)]" : "bg-red-600 hover:bg-red-500 text-white hover:shadow-[0_0_15px_rgba(220,38,38,0.5)]"}`}
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -364,7 +380,7 @@ export default function MovieDetailsPage() {
 
             <div className="flex-1 max-w-3xl">
               <div className="flex items-start justify-between gap-4 mb-4">
-                <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight">
+                <h1 className={`text-4xl lg:text-6xl font-bold leading-tight ${isPremiumMovie ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-300 to-amber-500 drop-shadow-[0_2px_10px_rgba(251,191,36,0.3)]" : "text-white"}`}>
                   {movie.title || "Untitled"}
                 </h1>
                 {movie.adult && (
@@ -374,23 +390,40 @@ export default function MovieDetailsPage() {
                 )}
               </div>
 
+              {isPremiumMovie && (
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-px flex-1 max-w-[200px] bg-gradient-to-r from-transparent via-amber-400 to-transparent" />
+                  <span className="text-amber-400 text-xs uppercase tracking-[0.3em] font-semibold">Masterpiece</span>
+                  <div className="h-px flex-1 max-w-[200px] bg-gradient-to-r from-transparent via-amber-400 to-transparent" />
+                </div>
+              )}
+
               {movie.tagline && (
-                <p className="text-gray-400 italic text-xl mb-6">&quot;{movie.tagline}&quot;</p>
+                <p className={`italic text-xl mb-6 ${isPremiumMovie ? "text-amber-300/80" : "text-gray-400"}`}>&quot;{movie.tagline}&quot;</p>
               )}
 
               <div className="flex flex-wrap items-center gap-3 mb-8">
-                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+                <div className={`flex items-center gap-2 backdrop-blur-sm px-4 py-2 rounded-full ${isPremiumMovie ? "bg-amber-500/20 border border-amber-400/30" : "bg-white/10"}`}>
                   <svg className={`w-6 h-6 ${getRatingColor(parseFloat(rating))}`} fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
                   <span className={`text-xl font-bold ${getRatingColor(parseFloat(rating))}`}>{rating}</span>
-                  <span className="text-gray-400 text-sm">({movie.vote_count?.toLocaleString()} votes)</span>
+                  <span className={isPremiumMovie ? "text-amber-400/70 text-sm" : "text-gray-400 text-sm"}>({movie.vote_count?.toLocaleString()} votes)</span>
                 </div>
 
                 {movie.status && (
-                  <span className={`px-4 py-2 rounded-full text-sm font-medium border ${getStatusColor(movie.status)}`}>
+                  <span className={`px-4 py-2 rounded-full text-sm font-medium border ${isPremiumMovie ? "bg-amber-500/20 border-amber-500/30 text-amber-300" : getStatusColor(movie.status)}`}>
                     {movie.status}
                   </span>
+                )}
+
+                {isPremiumMovie && (
+                  <div className="flex items-center gap-1 px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full">
+                    <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <span className="text-amber-400 text-sm font-medium">Top 250</span>
+                  </div>
                 )}
               </div>
 
@@ -416,12 +449,12 @@ export default function MovieDetailsPage() {
 
               {movie.genres && movie.genres.length > 0 && (
                 <div className="mb-8">
-                  <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-3">Genres</h3>
+                  <h3 className={`text-sm uppercase tracking-wider mb-3 ${isPremiumMovie ? "text-amber-400/70" : "text-gray-400"}`}>Genres</h3>
                   <div className="flex flex-wrap gap-2">
                     {movie.genres.map((genre) => (
                       <span
                         key={genre.id}
-                        className="px-4 py-2 bg-white/10 text-gray-200 rounded-full text-sm border border-white/20 hover:bg-white/20 transition-colors cursor-pointer"
+                        className={`px-4 py-2 rounded-full text-sm border transition-colors cursor-pointer ${isPremiumMovie ? "bg-amber-500/10 text-amber-200 border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-400/50" : "bg-white/10 text-gray-200 border-white/20 hover:bg-white/20"}`}
                       >
                         {genre.name}
                       </span>
@@ -504,12 +537,14 @@ export default function MovieDetailsPage() {
                 {trailerUrl ? (
                   <button
                     onClick={() => setShowTrailerModal(true)}
-                    className="group relative flex items-center gap-3 bg-red-600 text-white px-8 py-4 rounded-xl font-bold transition-all duration-300 hover:bg-red-500 hover:scale-105 hover:shadow-[0_0_20px_rgba(220,38,38,0.5)]"
+                    className={`group flex items-center gap-3 px-8 py-4 rounded-xl font-bold transition-all duration-300 hover:scale-105 ${isPremiumMovie 
+                      ? "bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-black hover:shadow-[0_0_30px_rgba(251,191,36,0.6)]" 
+                      : "bg-red-600 text-white hover:bg-red-500 hover:shadow-[0_0_20px_rgba(220,38,38,0.5)]"}`}
                   >
-                    <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
                       <path d="M8 5v14l11-7z" />
                     </svg>
-                    WATCH TRAILER
+                    {isPremiumMovie ? "WATCH TRAILER" : "WATCH TRAILER"}
                   </button>
                 ) : (
                   <button disabled className="flex items-center gap-3 bg-gray-600 text-gray-400 px-8 py-4 rounded-xl font-bold cursor-not-allowed opacity-50">
@@ -622,7 +657,7 @@ export default function MovieDetailsPage() {
               .filter((member) => ["Director", "Screenplay", "Writer", "Producer", "Executive Producer", "Original Story"].includes(member.job))
               .slice(0, 5)
               .map((member, idx) => (
-                <div key={`${member.id}-${member.job}-${idx}`} className="bg-gray-800/50 rounded-xl p-4 border border-gray-700/30 hover:border-red-500/50 transition-all duration-300">
+                <div key={`${member.id}-${member.job}-${idx}`} className={`bg-gray-800/50 rounded-xl p-4 border transition-all duration-300 ${isPremiumMovie ? "border-amber-500/30 hover:border-amber-400/60 hover:shadow-[0_0_15px_rgba(251,191,36,0.3)]" : "border-gray-700/30 hover:border-red-500/50"}`}>
                   {member.profile_path ? (
                     <div className="relative w-16 h-16 mb-3 mx-auto">
                       <Image
@@ -640,7 +675,7 @@ export default function MovieDetailsPage() {
                     </div>
                   )}
                   <p className="text-white text-sm font-medium text-center truncate">{member.name}</p>
-                  <p className="text-red-400 text-xs text-center truncate">{member.job}</p>
+                  <p className={`text-xs text-center truncate ${isPremiumMovie ? "text-amber-400" : "text-red-400"}`}>{member.job}</p>
                 </div>
               ))}
           </div>
@@ -702,7 +737,7 @@ export default function MovieDetailsPage() {
                     href={`/movie/${rec.id}`}
                     className="group"
                   >
-                    <div className="bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/30 hover:border-red-500/50 transition-all duration-300 hover:scale-105">
+<div className={`bg-gray-800/50 rounded-xl overflow-hidden border transition-all duration-300 hover:scale-105 ${isPremiumMovie ? "border-amber-500/30 hover:border-amber-400/60 hover:shadow-[0_0_15px_rgba(251,191,36,0.3)]" : "border-gray-700/30 hover:border-red-500/50"}`}>
                       {rec.poster_path ? (
                         <div className="relative aspect-[2/3]">
                           <Image
