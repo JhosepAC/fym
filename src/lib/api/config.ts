@@ -16,6 +16,7 @@ export const IMAGE_SIZES = {
     small: "w300",
     medium: "w780",
     large: "w1280",
+    ultra: "original",
     original: "original",
   },
   profile: {
