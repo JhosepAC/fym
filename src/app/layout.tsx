@@ -41,9 +41,9 @@ export const metadata: Metadata = {
   },
   description: APP_DESCRIPTION,
   keywords: ["movies", "TV shows", "film", "cinema", "streaming", "TMDB", "actor", "cast", "trailers", "reviews"],
-  authors: [{ name: "Jhosep" }],
-  creator: "Jhosep",
-  publisher: "FyM",
+  authors: [{ name: "Jhosep Argomedo" }],
+  creator: "Jhosep Argomedo",
+  publisher: "Jhosep Argomedo",
   applicationName: APP_NAME,
   formatDetection: {
     email: false,
@@ -100,7 +100,6 @@ export const metadata: Metadata = {
       { url: "/assets/favicon/favicon-dark.svg", media: "(prefers-color-scheme: light)" },
       { url: "/assets/favicon/favicon-light.svg", media: "(prefers-color-scheme: dark)" },
     ],
-    apple: [{ url: "/assets/favicon/apple-touch-icon.png", sizes: "180x180" }],
   },
   verification: {
     google: "google-site-verification-code",
@@ -120,7 +119,7 @@ export default function RootLayout({
     description: APP_DESCRIPTION,
     publisher: {
       "@type": "Person",
-      name: "Jhosep",
+      name: "Jhosep Argomedo",
     },
     potentialAction: {
       "@type": "SearchAction",
