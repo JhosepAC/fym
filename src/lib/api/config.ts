@@ -40,6 +40,7 @@ export const ENDPOINTS = {
     credits: (id: number) => `/movie/${id}/credits`,
     watchProviders: (id: number) => `/movie/${id}/watch/providers`,
     videos: (id: number) => `/movie/${id}/videos`,
+    discover: (genre: number, page: number, sortBy: string) => `/discover/movie?with_genres=${genre}&page=${page}&sort_by=${sortBy}`,
   },
   tv: {
     popular: "/tv/popular",
@@ -51,7 +52,12 @@ export const ENDPOINTS = {
     credits: (id: number) => `/tv/${id}/credits`,
     seasonDetails: (id: number, season: number) => `/tv/${id}/season/${season}`,
     seasonAggregateCredits: (id: number, season: number) => `/tv/${id}/season/${season}/aggregate_credits`,
+    seasonVideos: (id: number, season: number) => `/tv/${id}/season/${season}/videos`,
+    episodeImages: (id: number, season: number, episode: number) => `/tv/${id}/season/${season}/episode/${episode}/images`,
+    episodeVideos: (id: number, season: number, episode: number) => `/tv/${id}/season/${season}/episode/${episode}/videos`,
     videos: (id: number) => `/tv/${id}/videos`,
+    watchProviders: (id: number) => `/tv/${id}/watch/providers`,
+    discover: (genre: number, page: number, sortBy: string) => `/discover/tv?with_genres=${genre}&page=${page}&sort_by=${sortBy}`,
   },
   search: {
     multi: "/search/multi",

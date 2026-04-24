@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
@@ -11,6 +11,7 @@ import { TvShowDetail, Video, MediaItem, Cast, Crew, WatchProvider, TvSeason, Tv
 export default function SeriesDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [series, setSeries] = useState<TvShowDetail | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [recommendations, setRecommendations] = useState<MediaItem[]>([]);
@@ -24,18 +25,42 @@ export default function SeriesDetailsPage() {
   const [seasonDetails, setSeasonDetails] = useState<TvSeason | null>(null);
   const [seasonCast, setSeasonCast] = useState<SeasonCast[]>([]);
   const [seasonCrew, setSeasonCrew] = useState<SeasonCrew[]>([]);
+  const [seasonVideos, setSeasonVideos] = useState<Video[]>([]);
   const [showSeasonModal, setShowSeasonModal] = useState(false);
+  const [episodeImages, setEpisodeImages] = useState<{file_path: string}[]>([]);
+  const [episodeVideos, setEpisodeVideos] = useState<Video[]>([]);
+  const [showEpisodeModal, setShowEpisodeModal] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedStillImage, setSelectedStillImage] = useState<string | null>(null);
+  const [showStillModal, setShowStillModal] = useState(false);
+  const [showEpisodeTrailerModal, setShowEpisodeTrailerModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFullOverview, setShowFullOverview] = useState(false);
   const [showFullSeasonOverview, setShowFullSeasonOverview] = useState(false);
   const [showReadMore, setShowReadMore] = useState(false);
   const [showPosterModal, setShowPosterModal] = useState(false);
+  const [showSeasonPosterModal, setShowSeasonPosterModal] = useState(false);
   const [showTrailerModal, setShowTrailerModal] = useState(false);
+  const [recommendationsPage, setRecommendationsPage] = useState(1);
+  const [hasMoreRecommendations, setHasMoreRecommendations] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [showOtherResults, setShowOtherResults] = useState(false);
+  const [otherResults, setOtherResults] = useState<MediaItem[]>([]);
+  const loaderRef = useRef<HTMLDivElement>(null);
   const overviewRef = React.useRef<HTMLParagraphElement>(null);
   const castScrollRef = React.useRef<HTMLDivElement>(null);
+  const [castHasOverflow, setCastHasOverflow] = useState(false);
 
   const seriesId = Number(params.id);
+  const shouldPlayTrailer = searchParams.get("play") === "true";
+
+  useEffect(() => {
+    if (shouldPlayTrailer && videos.length > 0) {
+      setShowTrailerModal(true);
+    }
+  }, [shouldPlayTrailer, videos]);
 
   useEffect(() => {
     async function fetchSeries() {
@@ -52,7 +77,7 @@ export default function SeriesDetailsPage() {
           apiClient.getTvVideos(seriesId),
           apiClient.getTvRecommendations(seriesId),
           apiClient.getTvCredits(seriesId),
-          apiClient.getMovieWatchProviders(seriesId),
+          apiClient.getTvWatchProviders(seriesId),
         ]);
         setSeries(seriesData);
         setVideos(videosData.results || []);
@@ -80,21 +105,79 @@ export default function SeriesDetailsPage() {
     fetchSeries();
   }, [seriesId]);
 
+  const loadMoreRecommendations = useCallback(async () => {
+    if (loadingMore || !hasMoreRecommendations) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = recommendationsPage + 1;
+      const data = await apiClient.getTvRecommendations(seriesId, nextPage);
+      if (data.results && data.results.length > 0) {
+        setRecommendations(prev => [...prev, ...data.results]);
+        setRecommendationsPage(nextPage);
+        if (data.results.length < 20 || nextPage >= 3) {
+          setHasMoreRecommendations(false);
+        }
+      } else {
+        setHasMoreRecommendations(false);
+      }
+    } catch (error) {
+      console.error("Error loading more recommendations:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [seriesId, recommendationsPage, loadingMore, hasMoreRecommendations]);
+
+  const loadOtherResults = useCallback(async () => {
+    if (showOtherResults) return;
+    setShowOtherResults(true);
+    try {
+      const data = await apiClient.getTvSimilar(seriesId, 1);
+      setOtherResults(data.results || []);
+    } catch (error) {
+      console.error("Error loading similar series:", error);
+    }
+  }, [seriesId, showOtherResults]);
+
+  useEffect(() => {
+    if (!hasMoreRecommendations || recommendations.length < 10) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loadingMore) {
+          if (recommendationsPage >= 3 && hasMoreRecommendations) {
+            loadOtherResults();
+          } else {
+            loadMoreRecommendations();
+          }
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMoreRecommendations, recommendationsPage, loadingMore, recommendations.length, loadMoreRecommendations, loadOtherResults]);
+
   useEffect(() => {
     async function fetchSeasonEpisodes() {
       if (!series || !selectedSeason) return;
       
       try {
         setLoadingEpisodes(true);
-        const [seasonData, aggregateCredits] = await Promise.all([
+        const [seasonData, aggregateCredits, videosData] = await Promise.all([
           apiClient.getTvSeasonDetails(seriesId, selectedSeason),
           apiClient.getTvSeasonAggregateCredits(seriesId, selectedSeason),
+          apiClient.getTvSeasonVideos(seriesId, selectedSeason),
         ]);
         setSeasonDetails(seasonData);
         setSeasonEpisodes(seasonData.episodes || []);
         setSelectedEpisode(seasonData.episodes?.[0] || null);
         setSeasonCast(aggregateCredits.cast || []);
         setSeasonCrew(aggregateCredits.crew || []);
+        setSeasonVideos(videosData.results || []);
       } catch (err) {
         console.error("Failed to load episodes");
       } finally {
@@ -104,6 +187,17 @@ export default function SeriesDetailsPage() {
 
     fetchSeasonEpisodes();
   }, [seriesId, selectedSeason]);
+
+  useEffect(() => {
+    if (showSeasonModal || showTrailerModal || showPosterModal || showSeasonPosterModal || showEpisodeModal || showImageModal || showEpisodeTrailerModal || showStillModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [showSeasonModal, showTrailerModal, showPosterModal, showSeasonPosterModal, showEpisodeModal, showImageModal, showEpisodeTrailerModal, showStillModal]);
 
   useEffect(() => {
     if (series && overviewRef.current) {
@@ -118,10 +212,40 @@ export default function SeriesDetailsPage() {
     }
   }, [series]);
 
+  useEffect(() => {
+    async function fetchEpisodeDetails() {
+      if (!selectedEpisode || !showEpisodeModal || !selectedSeason) return;
+      
+      try {
+        const [imagesData, videosData] = await Promise.all([
+          apiClient.getTvEpisodeImages(seriesId, selectedSeason, selectedEpisode.episode_number),
+          apiClient.getTvEpisodeVideos(seriesId, selectedSeason, selectedEpisode.episode_number),
+        ]);
+        setEpisodeImages(imagesData.stills || []);
+        setEpisodeVideos(videosData.results || []);
+      } catch (err) {
+        console.error("Failed to load episode details");
+      }
+    }
+
+    fetchEpisodeDetails();
+  }, [selectedEpisode, showEpisodeModal, seriesId, selectedSeason]);
+
   const trailer = videos.find(
     (v) => v.type === "Trailer" && v.site === "YouTube"
   );
   const trailerUrl = trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null;
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (castScrollRef.current) {
+        setCastHasOverflow(castScrollRef.current.scrollWidth > castScrollRef.current.clientWidth);
+      }
+    };
+    checkOverflow();
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [cast]);
 
   if (loading) {
     return (
@@ -153,6 +277,7 @@ export default function SeriesDetailsPage() {
 
   const posterUrl = getImageUrl(series.poster_path, IMAGE_SIZES.poster.original);
   const backdropUrl = getImageUrl(series.backdrop_path, IMAGE_SIZES.backdrop.ultra);
+  const hasPoster = series.poster_path !== null && series.poster_path !== undefined;
   const rating = series.vote_average?.toFixed(1) || "N/A";
 
   const getStatusColor = (status: string) => {
@@ -223,9 +348,10 @@ export default function SeriesDetailsPage() {
 
           <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
             <div className="flex-shrink-0">
-              <div 
-                className="w-64 lg:w-80 rounded-xl overflow-hidden cursor-pointer"
-                onClick={() => posterUrl && setShowPosterModal(true)}
+              <button 
+                type="button"
+                className="relative w-64 lg:w-80 rounded-xl overflow-hidden cursor-pointer group"
+                onClick={() => hasPoster && setShowPosterModal(true)}
               >
                 {posterUrl ? (
                   <Image
@@ -233,14 +359,23 @@ export default function SeriesDetailsPage() {
                     alt={series.name || ""}
                     width={320}
                     height={480}
-                    className="w-full h-auto"
+                    className="w-full h-auto group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
                   <div className="w-80 h-[480px] bg-gray-800 flex items-center justify-center">
                     <span className="text-gray-500">No Image</span>
                   </div>
                 )}
-              </div>
+                {hasPoster && (
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center">
+                      <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                      </svg>
+                    </div>
+                  </div>
+                )}
+              </button>
             </div>
 
             <div className="flex-1 max-w-3xl">
@@ -390,17 +525,19 @@ export default function SeriesDetailsPage() {
           </div>
 
           {cast.length > 0 && (
-            <div className="px-6 lg:px-12 pb-12 max-w-7xl mx-auto">
+            <div className="px-6 lg:px-12 pt-12 pb-12 max-w-7xl mx-auto">
               <h3 className="text-white text-2xl font-semibold mb-6">Cast</h3>
               <div className="relative group">
-                <button
-                  onClick={() => castScrollRef.current?.scrollBy({ left: -300, behavior: "smooth" })}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-black/70 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0"
-                >
-                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
+                {castHasOverflow && (
+                  <button
+                    onClick={() => castScrollRef.current?.scrollBy({ left: -300, behavior: "smooth" })}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-black/70 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0"
+                  >
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                )}
                 
                 <div 
                   ref={castScrollRef}
@@ -413,7 +550,7 @@ export default function SeriesDetailsPage() {
                         {actor.profile_path ? (
                           <div className="relative w-32 h-40">
                             <Image
-                              src={getImageUrl(actor.profile_path, IMAGE_SIZES.profile.medium) || ""}
+                              src={getImageUrl(actor.profile_path, IMAGE_SIZES.profile.original) || ""}
                               alt={actor.name || ""}
                               fill
                               className="object-cover"
@@ -435,14 +572,16 @@ export default function SeriesDetailsPage() {
                   ))}
                 </div>
 
-                <button
-                  onClick={() => castScrollRef.current?.scrollBy({ left: 300, behavior: "smooth" })}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-black/70 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0"
+                {castHasOverflow && (
+                  <button
+                    onClick={() => castScrollRef.current?.scrollBy({ left: 300, behavior: "smooth" })}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-black/70 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0"
                 >
                   <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
+                )}
               </div>
             </div>
           )}
@@ -479,13 +618,23 @@ export default function SeriesDetailsPage() {
                     {seasonDetails && (
                       <div className="sticky top-24 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-white/10">
                         {seasonDetails.poster_path ? (
-                          <div className="relative w-full aspect-[2/3] mb-4 rounded-xl overflow-hidden">
+                          <div 
+                            className="relative w-full aspect-[2/3] mb-4 rounded-xl overflow-hidden cursor-pointer group"
+                            onClick={() => setShowSeasonPosterModal(true)}
+                          >
                             <Image
-                              src={getImageUrl(seasonDetails.poster_path, IMAGE_SIZES.poster.large) || ""}
+                              src={getImageUrl(seasonDetails.poster_path, IMAGE_SIZES.poster.original) || ""}
                               alt={seasonDetails.name || ""}
                               fill
-                              className="object-cover"
+                              className="object-cover group-hover:scale-105 transition-transform duration-500"
                             />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                              <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
+                                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                                </svg>
+                              </div>
+                            </div>
                           </div>
                         ) : (
                           <div className="w-full aspect-[2/3] bg-gray-800 rounded-xl mb-4 flex items-center justify-center">
@@ -549,53 +698,103 @@ export default function SeriesDetailsPage() {
                     )}
                   </div>
                   
-                  <div className="lg:col-span-2 space-y-3 max-h-[70vh] overflow-y-auto pr-2">
+                  <div className="lg:col-span-2 space-y-5 max-h-[70vh] overflow-y-auto pr-2">
                     {seasonEpisodes.map((episode) => (
                       <div
                         key={episode.id}
                         onClick={() => setSelectedEpisode(episode)}
-                        className={`group cursor-pointer bg-gray-900/50 rounded-xl overflow-hidden border transition-all duration-300 ${
+                        className={`group cursor-pointer rounded-2xl overflow-hidden border transition-all duration-300 hover:shadow-xl hover:shadow-red-500/20 ${
                           selectedEpisode?.id === episode.id
-                            ? "border-yellow-500 bg-gray-800/50"
-                            : "border-white/5 hover:border-white/20"
+                            ? "border-red-500 bg-gradient-to-br from-red-500/15 to-gray-900/80"
+                            : "border-white/10 bg-gradient-to-br from-gray-900/80 to-gray-900/40 hover:border-red-500/50"
                         }`}
                       >
-                        <div className="flex">
-                          <div className="flex-shrink-0 w-28 h-20 relative">
+                        <div className="flex gap-5 p-4">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (episode.still_path) {
+                                setSelectedStillImage(episode.still_path);
+                                setShowStillModal(true);
+                              }
+                            }}
+                            className="flex-shrink-0 w-52 h-32 relative rounded-xl overflow-hidden shadow-lg group/image cursor-pointer hover:ring-2 hover:ring-red-500 transition-all duration-300"
+                          >
                             {episode.still_path ? (
                               <Image
-                                src={getImageUrl(episode.still_path, IMAGE_SIZES.backdrop.small) || ""}
+                                src={getImageUrl(episode.still_path, IMAGE_SIZES.backdrop.original) || ""}
                                 alt={episode.name || ""}
                                 fill
-                                className="object-cover"
+                                className="object-cover group-hover:scale-110 transition-transform duration-700"
                               />
                             ) : (
                               <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                                <svg className="w-8 h-8 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-12 h-12 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
                                   <path d="M8 5v14l11-7z" />
                                 </svg>
                               </div>
                             )}
-                          </div>
-                          
-                          <div className="flex-1 p-3 flex flex-col justify-center">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-yellow-400 font-bold text-sm">E{episode.episode_number}</span>
-                              <span className="text-white font-medium">{episode.name}</span>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                              </svg>
                             </div>
-                            <div className="flex items-center gap-3 text-xs text-gray-500">
-                              <span>{episode.air_date}</span>
-                              {episode.runtime && <span>{episode.runtime} min</span>}
-                              <span className="text-yellow-400">★ {episode.vote_average?.toFixed(1)}</span>
+                            <div className="absolute top-2 left-2 px-2 py-1 bg-black/70 backdrop-blur-sm rounded-lg">
+                              <span className="text-red-500 font-bold text-sm">EP {episode.episode_number}</span>
+                            </div>
+                          </button>
+                          
+                          <div className="flex-1 flex flex-col justify-between py-2 min-w-0">
+                            <div className="space-y-2">
+                              <h4 className="text-white text-lg font-bold truncate group-hover:text-red-400 transition-colors">{episode.name}</h4>
+                              {episode.overview && (
+                                <p className="text-gray-400 text-sm line-clamp-2 leading-relaxed">{episode.overview}</p>
+                              )}
+                            </div>
+                            
+                            <div className="flex items-center justify-between pt-2">
+                              <div className="flex items-center gap-5 text-sm">
+                                <span className="flex items-center gap-1.5 text-gray-400">
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  <span className="font-medium">{episode.air_date?.split("-")[0]}</span>
+                                </span>
+                                {episode.runtime && (
+                                  <span className="flex items-center gap-1.5 text-gray-400">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span className="font-medium">{episode.runtime} min</span>
+                                  </span>
+                                )}
+                                {episode.vote_average > 0 && (
+                                  <span className="flex items-center gap-1.5 text-yellow-400 font-bold">
+                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                    <span className="font-bold">{episode.vote_average.toFixed(1)}</span>
+                                  </span>
+                                )}
+                              </div>
+                              
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedEpisode(episode);
+                                  setShowEpisodeModal(true);
+                                }}
+                                className="group/btn px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold text-sm rounded-xl transition-all duration-300 flex items-center gap-2 shadow-lg shadow-red-600/30 hover:shadow-red-500/50 hover:scale-105"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                More Info
+                              </button>
                             </div>
                           </div>
                         </div>
-                        
-                        {selectedEpisode?.id === episode.id && episode.overview && (
-                          <div className="px-3 pb-3 pt-0">
-                            <p className="text-gray-400 text-sm leading-relaxed">{episode.overview}</p>
-                          </div>
-                        )}
                       </div>
                     ))}
                   </div>
@@ -616,7 +815,7 @@ export default function SeriesDetailsPage() {
                       {member.profile_path ? (
                         <div className="relative w-16 h-16 mb-3 mx-auto">
                           <Image
-                            src={getImageUrl(member.profile_path, IMAGE_SIZES.profile.medium) || ""}
+                            src={getImageUrl(member.profile_path, IMAGE_SIZES.profile.original) || ""}
                             alt={member.name || ""}
                             fill
                             className="object-cover rounded-full"
@@ -641,9 +840,9 @@ export default function SeriesDetailsPage() {
             <div className="px-6 lg:px-12 pb-12 max-w-7xl mx-auto">
               <h3 className="text-white text-2xl font-semibold mb-6">Recommended Series</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {recommendations.slice(0, 10).map((rec) => (
+                {recommendations.map((rec, idx) => (
                   <Link
-                    key={rec.id}
+                    key={`${rec.id}-${idx}`}
                     href={`/series/${rec.id}`}
                     className="group"
                   >
@@ -651,7 +850,7 @@ export default function SeriesDetailsPage() {
                       {rec.poster_path ? (
                         <div className="relative aspect-[2/3]">
                           <Image
-                            src={getImageUrl(rec.poster_path, IMAGE_SIZES.poster.medium) || ""}
+                            src={getImageUrl(rec.poster_path, IMAGE_SIZES.poster.original) || ""}
                             alt={rec.name || ""}
                             fill
                             className="object-cover"
@@ -672,14 +871,61 @@ export default function SeriesDetailsPage() {
                   </Link>
                 ))}
               </div>
+
+              <div ref={loaderRef} className="h-24 flex items-center justify-center">
+                {loadingMore && (
+                  <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
+                )}
+                {!hasMoreRecommendations && recommendations.length > 0 && (
+                  <p className="text-gray-500">No more recommendations</p>
+                )}
+              </div>
+
+              {showOtherResults && otherResults.length > 0 && (
+                <div className="mt-12">
+                  <h3 className="text-white text-2xl font-semibold mb-6">Other Results You May Like</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {otherResults.map((rec, idx) => (
+                      <Link
+                        key={`other-${rec.id}-${idx}`}
+                        href={`/series/${rec.id}`}
+                        className="group"
+                      >
+                        <div className="bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/30 hover:border-red-500/50 transition-all duration-300 hover:scale-105">
+                          {rec.poster_path ? (
+                            <div className="relative aspect-[2/3]">
+                              <Image
+                                src={getImageUrl(rec.poster_path, IMAGE_SIZES.poster.original) || ""}
+                                alt={rec.name || ""}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="aspect-[2/3] bg-gray-800" />
+                          )}
+                          <div className="p-3">
+                            <p className="text-white text-sm font-medium truncate group-hover:text-red-400 transition-colors">
+                              {rec.name}
+                            </p>
+                            <p className="text-gray-500 text-xs">
+                              {rec.vote_average?.toFixed(1)} ★
+                            </p>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
 
-      {showPosterModal && posterUrl && (
+      {showPosterModal && hasPoster && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
           onClick={() => setShowPosterModal(false)}
         >
           <div className="relative max-w-4xl max-h-[90vh]">
@@ -692,7 +938,7 @@ export default function SeriesDetailsPage() {
               </svg>
             </button>
             <Image
-              src={posterUrl}
+              src={posterUrl || ""}
               alt={series.name || ""}
               width={600}
               height={900}
@@ -703,26 +949,61 @@ export default function SeriesDetailsPage() {
         </div>
       )}
 
-      {showTrailerModal && trailer && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-4"
-          onClick={() => setShowTrailerModal(false)}
-        >
-          <div className="relative w-full max-w-6xl aspect-video" onClick={(e) => e.stopPropagation()}>
-            <button
+      {showTrailerModal && (() => {
+          const seasonTrailer = seasonVideos.find(
+            (v) => v.type === "Trailer" && v.site === "YouTube"
+          );
+          const activeTrailer = seasonTrailer || trailer;
+
+          if (!activeTrailer) return null;
+
+          return (
+            <div 
+              className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4"
               onClick={() => setShowTrailerModal(false)}
+            >
+              <div className="relative w-full max-w-6xl aspect-video" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => setShowTrailerModal(false)}
+                  className="absolute -top-12 right-0 text-white/70 hover:text-white p-2"
+                >
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <iframe
+                  src={`https://www.youtube.com/embed/${activeTrailer.key}?autoplay=1&vq=hd1080`}
+                  title={activeTrailer.name}
+                  className="w-full h-full rounded-lg"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            </div>
+          );
+        })()}
+
+      {showSeasonPosterModal && seasonDetails?.poster_path && (
+        <div 
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
+          onClick={() => setShowSeasonPosterModal(false)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh]">
+            <button
+              onClick={() => setShowSeasonPosterModal(false)}
               className="absolute -top-12 right-0 text-white/70 hover:text-white p-2"
             >
               <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <iframe
-              src={`https://www.youtube.com/embed/${trailer.key}?autoplay=1&vq=hd1080`}
-              title={trailer.name}
-              className="w-full h-full rounded-lg"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
+            <Image
+              src={getImageUrl(seasonDetails.poster_path, IMAGE_SIZES.poster.original) || ""}
+              alt={seasonDetails.name || ""}
+              width={500}
+              height={750}
+              className="max-h-[90vh] w-auto rounded-lg"
+              quality={100}
             />
           </div>
         </div>
@@ -747,16 +1028,21 @@ export default function SeriesDetailsPage() {
             </button>
 
             <div className="relative h-64 md:h-80">
-              {seasonDetails.poster_path ? (
-                <Image
-                  src={getImageUrl(seasonDetails.poster_path, IMAGE_SIZES.backdrop.ultra) || ""}
-                  alt={seasonDetails.name || ""}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-800" />
-              )}
+              <div 
+                className="absolute inset-0 cursor-pointer"
+                onClick={() => setShowSeasonPosterModal(true)}
+              >
+                {seasonDetails.poster_path ? (
+                  <Image
+                    src={getImageUrl(seasonDetails.poster_path, IMAGE_SIZES.backdrop.ultra) || ""}
+                    alt={seasonDetails.name || ""}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-800" />
+                )}
+              </div>
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">{seasonDetails.name}</h2>
@@ -787,6 +1073,27 @@ export default function SeriesDetailsPage() {
               </div>
             </div>
 
+            {(() => {
+              const seasonTrailer = seasonVideos.find(
+                (v) => v.type === "Trailer" && v.site === "YouTube"
+              );
+              const seasonTrailerUrl = seasonTrailer ? `https://www.youtube.com/watch?v=${seasonTrailer.key}` : null;
+
+              return seasonTrailerUrl ? (
+                <div className="pt-4 pb-6 pl-6 md:pl-8">
+                  <button
+                    onClick={() => setShowTrailerModal(true)}
+                    className="group relative flex items-center gap-3 bg-red-600 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 hover:bg-red-500 hover:scale-105 hover:shadow-[0_0_20px_rgba(220,38,38,0.5)]"
+                  >
+                    <svg className="w-5 h-5 fill-white" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                    WATCH TRAILER
+                  </button>
+                </div>
+              ) : null;
+            })()}
+
             <div className="p-6 md:p-8">
               {seasonDetails.overview && (
                 <div className="mb-8">
@@ -804,7 +1111,7 @@ export default function SeriesDetailsPage() {
                         {actor.profile_path ? (
                           <div className="relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden">
                             <Image
-                              src={getImageUrl(actor.profile_path, IMAGE_SIZES.profile.medium) || ""}
+                              src={getImageUrl(actor.profile_path, IMAGE_SIZES.profile.original) || ""}
                               alt={actor.name || ""}
                               fill
                               className="object-cover"
@@ -839,7 +1146,7 @@ export default function SeriesDetailsPage() {
                         {member.profile_path ? (
                           <div className="relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden">
                             <Image
-                              src={getImageUrl(member.profile_path, IMAGE_SIZES.profile.medium) || ""}
+                              src={getImageUrl(member.profile_path, IMAGE_SIZES.profile.original) || ""}
                               alt={member.name || ""}
                               fill
                               className="object-cover"
@@ -862,6 +1169,228 @@ export default function SeriesDetailsPage() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {showImageModal && selectedImage && (
+        <div 
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4"
+          onClick={() => setShowImageModal(false)}
+        >
+          <div className="relative max-w-6xl max-h-[90vh]">
+            <button
+              onClick={() => setShowImageModal(false)}
+              className="absolute -top-12 right-0 text-white/70 hover:text-white p-2"
+            >
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <Image
+              src={getImageUrl(selectedImage, IMAGE_SIZES.backdrop.original) || ""}
+              alt="Episode still"
+              width={1920}
+              height={1080}
+              className="max-h-[90vh] w-auto rounded-lg"
+              quality={100}
+            />
+          </div>
+        </div>
+      )}
+
+      {showEpisodeTrailerModal && episodeVideos.length > 0 && (
+        <div 
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4"
+          onClick={() => setShowEpisodeTrailerModal(false)}
+        >
+          <div className="relative w-full max-w-6xl aspect-video" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setShowEpisodeTrailerModal(false)}
+              className="absolute -top-12 right-0 text-white/70 hover:text-white p-2"
+            >
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <iframe
+              src={`https://www.youtube.com/embed/${episodeVideos[0].key}?autoplay=1&vq=hd1080`}
+              title={episodeVideos[0].name}
+              className="w-full h-full rounded-lg"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
+
+      {showEpisodeModal && selectedEpisode && (
+        <div 
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 overflow-y-auto"
+          onClick={() => setShowEpisodeModal(false)}
+        >
+          <div 
+            className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowEpisodeModal(false)}
+              className="absolute top-4 right-4 z-10 text-white/70 hover:text-white p-2 bg-black/50 rounded-full"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div className="relative h-64 md:h-80">
+              {selectedEpisode.still_path ? (
+                <Image
+                  src={getImageUrl(selectedEpisode.still_path, IMAGE_SIZES.backdrop.ultra) || ""}
+                  alt={selectedEpisode.name || ""}
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-800" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="px-3 py-1 bg-red-600 text-white text-sm font-bold rounded-lg">EP {selectedEpisode.episode_number}</span>
+                  {selectedEpisode.vote_average > 0 && (
+                    <span className="flex items-center gap-1 bg-yellow-500/20 px-2 py-1 rounded-lg">
+                      <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                      <span className="text-yellow-400 font-bold text-sm">{selectedEpisode.vote_average.toFixed(1)}</span>
+                    </span>
+                  )}
+                </div>
+                <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">{selectedEpisode.name}</h2>
+                <div className="flex flex-wrap items-center gap-4 text-gray-300">
+                  {selectedEpisode.air_date && (
+                    <span className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      {selectedEpisode.air_date}
+                    </span>
+                  )}
+                  {selectedEpisode.runtime && (
+                    <span className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {selectedEpisode.runtime} min
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 md:p-8">
+              {selectedEpisode.overview && (
+                <div className="mb-8">
+                  <h3 className="text-white text-xl font-semibold mb-3">Synopsis</h3>
+                  <p className="text-gray-300 leading-relaxed">{selectedEpisode.overview}</p>
+                </div>
+              )}
+
+              {episodeVideos.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-white text-xl font-semibold mb-4">Videos ({episodeVideos.length})</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {episodeVideos.slice(0, 6).map((video) => (
+                      <button
+                        key={video.id}
+                        onClick={() => {
+                          const tempVideo = video;
+                          setEpisodeVideos(prev => [tempVideo, ...prev.filter(v => v.id !== video.id)]);
+                          setShowEpisodeTrailerModal(true);
+                        }}
+                        className="group relative aspect-video rounded-xl overflow-hidden bg-gray-800"
+                      >
+                        <img
+                          src={`https://i.ytimg.com/vi/${video.key}/maxresdefault.jpg`}
+                          alt={video.name || ""}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = `https://i.ytimg.com/vi/${video.key}/hqdefault.jpg`;
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center group-hover:bg-black/30 transition-colors">
+                          <div className="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          </div>
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                          <p className="text-white text-xs font-medium truncate">{video.name}</p>
+                          <p className="text-gray-400 text-xs">{video.type}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {episodeImages.length > 0 && (
+                <div>
+                  <h3 className="text-white text-xl font-semibold mb-4">Images ({episodeImages.length})</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    {episodeImages.map((image, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setSelectedImage(image.file_path);
+                          setShowImageModal(true);
+                        }}
+                        className="group relative aspect-video rounded-xl overflow-hidden bg-gray-800"
+                      >
+                        <Image
+                          src={getImageUrl(image.file_path, IMAGE_SIZES.backdrop.original) || ""}
+                          alt={`Still ${idx + 1}`}
+                          fill
+                          className="object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                          <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                          </svg>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showStillModal && selectedStillImage && (
+        <div 
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4"
+          onClick={() => setShowStillModal(false)}
+        >
+          <div className="relative max-w-6xl max-h-[90vh]">
+            <button
+              onClick={() => setShowStillModal(false)}
+              className="absolute -top-12 right-0 text-white/70 hover:text-white p-2"
+            >
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <Image
+              src={getImageUrl(selectedStillImage, IMAGE_SIZES.backdrop.original) || ""}
+              alt="Episode still"
+              width={1920}
+              height={1080}
+              className="max-h-[90vh] w-auto rounded-lg"
+              quality={100}
+            />
           </div>
         </div>
       )}

@@ -15,22 +15,35 @@ interface Category {
 interface MovieGridProps {
   categories: Category[];
   filters?: FilterState;
+  collapsedSections?: Record<string, boolean>;
+  onToggleSection?: (title: string) => void;
 }
 
-export default function MovieGrid({ categories, filters }: MovieGridProps) {
-  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+export default function MovieGrid({ categories, filters, collapsedSections = {}, onToggleSection }: MovieGridProps) {
+  const [internalCollapsed, setInternalCollapsed] = useState<Record<string, boolean>>({});
+
+  const isCollapsed = (title: string) => {
+    if (collapsedSections && title in collapsedSections) {
+      return collapsedSections[title];
+    }
+    return internalCollapsed[title] || false;
+  };
+
+  const toggleSection = (title: string) => {
+    if (onToggleSection) {
+      onToggleSection(title);
+    } else {
+      setInternalCollapsed(prev => ({
+        ...prev,
+        [title]: !prev[title]
+      }));
+    }
+  };
 
   const filteredCategories = categories.map(category => ({
     ...category,
     items: filterItems(category.items, filters),
   })).filter(cat => cat.items.length > 0);
-
-  const toggleSection = (title: string) => {
-    setCollapsedSections(prev => ({
-      ...prev,
-      [title]: !prev[title]
-    }));
-  };
 
   return (
     <div className="space-y-12">
@@ -42,7 +55,7 @@ export default function MovieGrid({ categories, filters }: MovieGridProps) {
               className="w-8 h-8 flex items-center justify-center bg-white/10 border border-white/20 rounded-lg text-white hover:bg-white/20 hover:border-white/40 transition-all duration-300"
             >
               <svg 
-                className={`w-4 h-4 transition-transform duration-300 ${collapsedSections[category.title] ? 'rotate-90' : ''}`} 
+                className={`w-4 h-4 transition-transform duration-300 ${isCollapsed(category.title) ? 'rotate-90' : ''}`} 
                 fill="none" 
                 viewBox="0 0 24 24" 
                 stroke="currentColor"
@@ -57,10 +70,10 @@ export default function MovieGrid({ categories, filters }: MovieGridProps) {
             <div className="h-px flex-1 bg-gradient-to-r from-red-600 to-transparent" />
           </div>
           
-          <div className={`overflow-hidden transition-all duration-500 ease-in-out ${collapsedSections[category.title] ? 'max-h-0 opacity-0' : 'max-h-[9999px] opacity-100'}`}>
+          <div className={`overflow-hidden transition-all duration-500 ease-in-out ${isCollapsed(category.title) ? 'max-h-0 opacity-0' : 'max-h-[9999px] opacity-100'}`}>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
-              {category.items.map((item) => (
-                <MovieCard key={item.id} item={item} />
+              {category.items.map((item, idx) => (
+                <MovieCard key={`${category.title}-${item.id}-${idx}`} item={item} />
               ))}
             </div>
           </div>
@@ -94,7 +107,7 @@ function MovieCard({ item }: { item: MediaItem }) {
   const [imageError, setImageError] = useState(false);
 
   const title = item.title || item.name || "Untitled";
-  const posterUrl = getImageUrl(item.poster_path, IMAGE_SIZES.poster.large);
+  const posterUrl = getImageUrl(item.poster_path, IMAGE_SIZES.poster.original);
   const rating = item.vote_average ? item.vote_average.toFixed(1) : "N/A";
   const year = item.release_date?.split("-")[0] || item.first_air_date?.split("-")[0] || "N/A";
   const mediaType = item.media_type === "tv" || item.first_air_date ? "TV Series" : "Movie";
@@ -103,6 +116,12 @@ function MovieCard({ item }: { item: MediaItem }) {
   const handleClick = () => {
     const type = item.media_type === "tv" || item.first_air_date ? "series" : "movie";
     router.push(`/${type}/${item.id}`);
+  };
+
+  const handlePlayClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const type = item.media_type === "tv" || item.first_air_date ? "series" : "movie";
+    router.push(`/${type}/${item.id}?play=true`);
   };
 
   return (
@@ -147,22 +166,23 @@ function MovieCard({ item }: { item: MediaItem }) {
             <h3 className="text-white font-bold text-lg mb-1 line-clamp-1">{title}</h3>
             <p className="text-gray-400 text-xs mb-3">{year} • {mediaType}</p>
             <p className="text-gray-300 text-sm line-clamp-3 mb-4">{overview}</p>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button 
-                className="flex-1 bg-white text-black py-2 rounded-lg text-sm font-bold hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
-                onClick={(e) => { e.stopPropagation(); handleClick(); }}
+                className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white py-2.5 rounded-lg text-sm font-bold hover:from-red-500 hover:to-red-600 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-600/40"
+                onClick={handleClick}
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Play
+                Ver más
               </button>
               <button 
-                className="p-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors"
-                onClick={(e) => { e.stopPropagation(); handleClick(); }}
+                className="p-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 hover:border-white/40 transition-all"
+                onClick={handlePlayClick}
+                title="Reproducir trailer"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v12m0 0a12 12 0 1 0 0 24 12 12 0 0 0 0-24z" />
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
                 </svg>
               </button>
             </div>
@@ -179,3 +199,5 @@ function MovieCard({ item }: { item: MediaItem }) {
     </div>
   );
 }
+
+export { MovieCard };

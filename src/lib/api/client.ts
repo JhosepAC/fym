@@ -11,7 +11,7 @@ class ApiClient {
     this.language = TMDB_CONFIG.LANGUAGE;
   }
 
-  private async fetch<T>(endpoint: string, params: Record<string, string> = {}): Promise<T> {
+  async fetch<T>(endpoint: string, params: Record<string, string> = {}): Promise<T> {
     const url = new URL(`${this.baseUrl}${endpoint}`);
     url.searchParams.append("api_key", this.apiKey);
     url.searchParams.append("language", this.language);
@@ -62,6 +62,14 @@ class ApiClient {
     return this.fetch<ApiResponse>(ENDPOINTS.movie.recommendations(id), { page: String(page) });
   }
 
+  async getTvSimilar(id: number, page: number = 1) {
+    return this.fetch<ApiResponse>(ENDPOINTS.tv.similar(id), { page: String(page) });
+  }
+
+  async getTvRecommendations(id: number, page: number = 1) {
+    return this.fetch<ApiResponse>(ENDPOINTS.tv.recommendations(id), { page: String(page) });
+  }
+
   async getMovieCredits(id: number) {
     return this.fetch<CreditsResponse>(ENDPOINTS.movie.credits(id));
   }
@@ -86,12 +94,22 @@ class ApiClient {
     return this.fetch<TvShowDetail>(ENDPOINTS.tv.details(id));
   }
 
-  async getTvRecommendations(id: number, page: number = 1) {
-    return this.fetch<ApiResponse>(ENDPOINTS.tv.recommendations(id), { page: String(page) });
-  }
-
   async getTvCredits(id: number) {
     return this.fetch<CreditsResponse>(ENDPOINTS.tv.credits(id));
+  }
+
+  async getTvWatchProviders(id: number) {
+    return this.fetch<WatchProvidersResponse>(ENDPOINTS.tv.watchProviders(id));
+  }
+
+  async discoverMovies(genre: number, page: number = 1, sortBy: string = "popularity.desc") {
+    const endpoint = ENDPOINTS.movie.discover(genre, page, sortBy);
+    return this.fetch<ApiResponse>(endpoint);
+  }
+
+  async discoverSeries(genre: number, page: number = 1, sortBy: string = "popularity.desc") {
+    const endpoint = ENDPOINTS.tv.discover(genre, page, sortBy);
+    return this.fetch<ApiResponse>(endpoint);
   }
 
   async getTvSeasonDetails(id: number, seasonNumber: number) {
@@ -100,6 +118,18 @@ class ApiClient {
 
   async getTvSeasonAggregateCredits(id: number, seasonNumber: number) {
     return this.fetch<SeasonAggregateCredits>(ENDPOINTS.tv.seasonAggregateCredits(id, seasonNumber));
+  }
+
+  async getTvSeasonVideos(id: number, seasonNumber: number) {
+    return this.fetch<VideosResponse>(ENDPOINTS.tv.seasonVideos(id, seasonNumber));
+  }
+
+  async getTvEpisodeImages(id: number, seasonNumber: number, episodeNumber: number) {
+    return this.fetch<EpisodeImagesResponse>(ENDPOINTS.tv.episodeImages(id, seasonNumber, episodeNumber));
+  }
+
+  async getTvEpisodeVideos(id: number, seasonNumber: number, episodeNumber: number) {
+    return this.fetch<VideosResponse>(ENDPOINTS.tv.episodeVideos(id, seasonNumber, episodeNumber));
   }
 
   async getMovieVideos(id: number) {
@@ -279,6 +309,18 @@ export interface Video {
 export interface VideosResponse {
   id: number;
   results: Video[];
+}
+
+export interface EpisodeImagesResponse {
+  id: number;
+ stills: {
+    aspect_ratio: number;
+    height: number;
+    width: number;
+    file_path: string;
+    vote_average: number;
+    vote_count: number;
+  }[];
 }
 
 export interface Cast {
