@@ -36,7 +36,7 @@ export default function HeroBanner({ items, currentIndex, onIndexChange }: HeroB
         const videoList = data.results || [];
         setVideos(videoList);
         
-        const officialTrailer = videoList.find((v: Video) => v.type === "Trailer" && v.site === "YouTube" && (v as any).official === true);
+        const officialTrailer = videoList.find((v: Video) => v.type === "Trailer" && v.site === "YouTube" && v.official === true);
         const anyTrailer = videoList.find((v: Video) => v.type === "Trailer" && v.site === "YouTube");
         setTrailer(officialTrailer || anyTrailer || null);
       } catch (error) {
