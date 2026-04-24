@@ -101,9 +101,6 @@ export const metadata: Metadata = {
       { url: "/assets/favicon/favicon-light.svg", media: "(prefers-color-scheme: dark)" },
     ],
   },
-  verification: {
-    google: "xzaYXgdMklUGOAs62CBnQ7Shp404wPprPaVZcnlmEeY",
-  },
 } as const;
 
 export default function RootLayout({
