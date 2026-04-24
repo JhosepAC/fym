@@ -31,6 +31,7 @@ export default function MovieDetailsPage() {
   const [showOtherResults, setShowOtherResults] = useState(false);
   const [otherResults, setOtherResults] = useState<MediaItem[]>([]);
   const [collectionCount, setCollectionCount] = useState<number | null>(null);
+  const [showGoldEffect, setShowGoldEffect] = useState(false);
   const loaderRef = useRef<HTMLDivElement>(null);
   const overviewRef = React.useRef<HTMLParagraphElement>(null);
   const castScrollRef = React.useRef<HTMLDivElement>(null);
@@ -43,6 +44,8 @@ export default function MovieDetailsPage() {
     if (isPremiumMovie) {
       const style = document.createElement("style");
       style.textContent = `
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Cinzel:wght@400;600;700&display=swap');
+        
         .premium-page::-webkit-scrollbar { height: 6px; width: 6px; }
         .premium-page::-webkit-scrollbar-track { background: rgba(251, 191, 36, 0.08); }
         .premium-page::-webkit-scrollbar-thumb { 
@@ -53,9 +56,130 @@ export default function MovieDetailsPage() {
           background: linear-gradient(90deg, #F4B400, #FFD700); 
           box-shadow: 0 0 12px rgba(255, 215, 0, 0.7);
         }
+        
+        @keyframes goldShimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        
+        
+          0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+          10% { opacity: 0.8; }
+          90% { opacity: 0.8; }
+          100% { transform: translateY(-100vh) translateX(50px) rotate(360deg); opacity: 0; }
+        }
+        
+        @keyframes curtainReveal {
+          0% { clip-path: inset(0 0 100% 0); }
+          100% { clip-path: inset(0 0 0 0); }
+        }
+        
+        @keyframes awardGlow {
+          0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), 0 0 40px rgba(255, 215, 0, 0.1); }
+          50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.5), 0 0 60px rgba(255, 215, 0, 0.2); }
+        }
+        
+        .gold-shimmer-text {
+          background: linear-gradient(90deg, #B8860B, #FFD700, #FFFACD, #FFD700, #B8860B);
+          background-size: 200% auto;
+          -webkit-background-clip: text;
+          background-clip: text;
+          animation: goldShimmer 4s linear infinite;
+        }
+        
+        .classic-frame {
+          position: relative;
+          padding: 12px;
+          background: linear-gradient(145deg, #1a1510 0%, #0d0a08 50%, #1a1510 100%);
+          border: 3px solid transparent;
+          background-clip: padding-box;
+        }
+        
+        .classic-frame::before {
+          content: '';
+          position: absolute;
+          inset: -3px;
+          background: linear-gradient(145deg, #FFD700, #B8860B, #DAA520, #B8860B, #FFD700);
+          border-radius: inherit;
+          z-index: -1;
+        }
+        
+        .classic-frame::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(145deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(0,0,0,0.2) 100%);
+          border-radius: inherit;
+          pointer-events: none;
+}
+         
+        .gold-particle {
+          position: fixed;
+          width: 4px;
+          height: 4px;
+          background: #FFD700;
+          border-radius: 50%;
+          pointer-events: none;
+          animation: particleFloat 8s ease-in-out infinite;
+          box-shadow: 0 0 6px #FFD700, 0 0 12px rgba(255, 215, 0, 0.5);
+        }
+        
+        .vintage-ticket {
+          position: relative;
+          background: linear-gradient(180deg, #1a1510 0%, #0d0a08 100%);
+          border: 2px dashed #B8860B;
+          padding: 20px;
+        }
+        
+        .vintage-ticket::before,
+        .vintage-ticket::after {
+          content: '';
+          position: absolute;
+          width: 12px;
+          height: 12px;
+          background: #0a0a0b;
+          border-radius: 50%;
+          top: 50%;
+          transform: translateY(-50%);
+        }
+        
+        .vintage-ticket::before { left: -8px; }
+        .vintage-ticket::after { right: -8px; }
+        
+        .award-badge {
+          animation: awardGlow 3s ease-in-out infinite;
+          border: 2px solid #FFD700;
+          background: linear-gradient(145deg, rgba(255, 215, 0, 0.1), rgba(184, 134, 11, 0.05));
+        }
+        
+        .classic-divider {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        
+        .classic-divider::before,
+        .classic-divider::after {
+          content: '';
+          flex: 1;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, #B8860B, transparent);
+        }
+        
+        .star-icon {
+          color: #FFD700;
+          filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.5));
+        }
       `;
       document.head.appendChild(style);
       return () => { document.head.removeChild(style); };
+    }
+  }, [isPremiumMovie]);
+
+  useEffect(() => {
+    if (isPremiumMovie) {
+      const timer = setTimeout(() => setShowGoldEffect(true), 100);
+      return () => clearTimeout(timer);
     }
   }, [isPremiumMovie]);
 
@@ -289,6 +413,27 @@ export default function MovieDetailsPage() {
 
   return (
     <div className={`min-h-screen ${isPremiumMovie ? "premium-page bg-gradient-to-br from-[#0a0a0b] via-[#1a1510] to-[#0a0a0b]" : "bg-[#0a0a0b]"}`}>
+      {isPremiumMovie && showGoldEffect && (
+        <>
+          <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
+            {[...Array(12)].map((_, i) => (
+              <div
+                key={i}
+                className="gold-particle"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  bottom: `-20px`,
+                  animationDelay: `${i * 0.7}s`,
+                  animationDuration: `${6 + Math.random() * 4}s`,
+                  width: `${2 + Math.random() * 4}px`,
+                  height: `${2 + Math.random() * 4}px`,
+                }}
+              />
+            ))}
+          </div>
+          
+        </>
+      )}
       <Navbar transparent={false} />
 
       <div className="relative">
@@ -323,7 +468,7 @@ export default function MovieDetailsPage() {
           <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
             <div className="flex-shrink-0">
               <div 
-                className={`relative w-64 lg:w-80 rounded-xl overflow-hidden cursor-pointer group transition-all duration-500 ${isPremiumMovie ? "ring-2 ring-amber-400/50 hover:ring-amber-400 hover:shadow-[0_0_30px_rgba(251,191,36,0.4)]" : ""}`}
+                className={`relative w-64 lg:w-80 rounded-xl overflow-hidden cursor-pointer group transition-all duration-500 ${isPremiumMovie ? "classic-frame" : ""}`}
                 onClick={() => posterUrl && setShowPosterModal(true)}
               >
                 {posterUrl ? (
@@ -349,7 +494,11 @@ export default function MovieDetailsPage() {
                   </div>
                 )}
                 {isPremiumMovie && (
-                  <div className="absolute inset-0 rounded-xl border-2 border-amber-400/30 pointer-events-none" />
+                  <div className="absolute top-3 right-3 award-badge rounded-full p-2">
+                    <svg className="w-6 h-6 star-icon" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  </div>
                 )}
               </div>
 
@@ -403,7 +552,7 @@ export default function MovieDetailsPage() {
 
             <div className="flex-1 max-w-3xl">
               <div className="flex items-start justify-between gap-4 mb-4">
-                <h1 className={`text-4xl lg:text-6xl font-bold leading-tight ${isPremiumMovie ? "text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-300 to-amber-500 drop-shadow-[0_2px_10px_rgba(251,191,36,0.3)]" : "text-white"}`}>
+                <h1 className={`text-4xl lg:text-6xl font-bold leading-tight font-serif ${isPremiumMovie ? "gold-shimmer-text" : "text-white"}`}>
                   {movie.title || "Untitled"}
                 </h1>
                 {movie.adult && (
@@ -414,10 +563,14 @@ export default function MovieDetailsPage() {
               </div>
 
               {isPremiumMovie && (
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="h-px flex-1 max-w-[200px] bg-gradient-to-r from-transparent via-amber-400 to-transparent" />
-                  <span className="text-amber-400 text-xs uppercase tracking-[0.3em] font-semibold">Masterpiece</span>
-                  <div className="h-px flex-1 max-w-[200px] bg-gradient-to-r from-transparent via-amber-400 to-transparent" />
+                <div className="classic-divider mb-4">
+                  <svg className="w-6 h-6 star-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <span className="text-amber-400 text-sm uppercase tracking-[0.3em] font-semibold font-serif italic">Masterpiece</span>
+                  <svg className="w-6 h-6 star-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
                 </div>
               )}
 
@@ -426,7 +579,7 @@ export default function MovieDetailsPage() {
               )}
 
               <div className="flex flex-wrap items-center gap-3 mb-8">
-                <div className={`flex items-center gap-2 backdrop-blur-sm px-4 py-2 rounded-full ${isPremiumMovie ? "bg-amber-500/20 border border-amber-400/30" : "bg-white/10"}`}>
+                <div className={`flex items-center gap-2 backdrop-blur-sm px-4 py-2 rounded-full ${isPremiumMovie ? "vintage-ticket" : "bg-white/10"}`}>
                   <svg className={`w-6 h-6 ${getRatingColor(parseFloat(rating))}`} fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
@@ -561,13 +714,15 @@ export default function MovieDetailsPage() {
                   <button
                     onClick={() => setShowTrailerModal(true)}
                     className={`group flex items-center gap-3 px-8 py-4 rounded-xl font-bold transition-all duration-300 hover:scale-105 ${isPremiumMovie 
-                      ? "bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-black hover:shadow-[0_0_30px_rgba(251,191,36,0.6)]" 
+                      ? "vintage-ticket hover:border-amber-400 font-serif uppercase tracking-wider"
                       : "bg-red-600 text-white hover:bg-red-500 hover:shadow-[0_0_20px_rgba(220,38,38,0.5)]"}`}
                   >
                     <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
                       <path d="M8 5v14l11-7z" />
                     </svg>
-                    {isPremiumMovie ? "WATCH TRAILER" : "WATCH TRAILER"}
+                    {isPremiumMovie ? (
+                      <span className="gold-shimmer-text">Watch Trailer</span>
+                    ) : "Watch Trailer"}
                   </button>
                 ) : (
                   <button disabled className="flex items-center gap-3 bg-gray-600 text-gray-400 px-8 py-4 rounded-xl font-bold cursor-not-allowed opacity-50">
