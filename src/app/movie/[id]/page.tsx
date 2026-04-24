@@ -40,6 +40,26 @@ export default function MovieDetailsPage() {
   const shouldPlayTrailer = searchParams.get("play") === "true";
 
   useEffect(() => {
+    if (isPremiumMovie) {
+      const style = document.createElement("style");
+      style.textContent = `
+        .premium-page::-webkit-scrollbar { height: 6px; width: 6px; }
+        .premium-page::-webkit-scrollbar-track { background: rgba(251, 191, 36, 0.08); }
+        .premium-page::-webkit-scrollbar-thumb { 
+          background: linear-gradient(90deg, #FFD700, #F4B400); 
+          border-radius: 10px; 
+        }
+        .premium-page::-webkit-scrollbar-thumb:hover { 
+          background: linear-gradient(90deg, #F4B400, #FFD700); 
+          box-shadow: 0 0 12px rgba(255, 215, 0, 0.7);
+        }
+      `;
+      document.head.appendChild(style);
+      return () => { document.head.removeChild(style); };
+    }
+  }, [isPremiumMovie]);
+
+  useEffect(() => {
     if (shouldPlayTrailer && videos.length > 0) {
       setShowTrailerModal(true);
     }
@@ -186,7 +206,7 @@ export default function MovieDetailsPage() {
       <div className="min-h-screen bg-[#0a0a0b]">
         <Navbar transparent={false} />
         <div className="flex items-center justify-center h-[60vh]">
-          <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
+          <div className={`w-12 h-12 border-4 border-t-transparent rounded-full animate-spin ${isPremiumMovie ? "border-amber-500" : "border-red-600"}`} />
         </div>
       </div>
     );
@@ -197,10 +217,10 @@ export default function MovieDetailsPage() {
       <div className="min-h-screen bg-[#0a0a0b]">
         <Navbar transparent={false} />
         <div className="flex flex-col items-center justify-center h-[60vh]">
-          <p className="text-red-500 text-xl mb-4">{error || "Movie not found"}</p>
+          <p className={`text-xl mb-4 ${isPremiumMovie ? "text-amber-500" : "text-red-500"}`}>{error || "Movie not found"}</p>
           <button
             onClick={() => router.back()}
-            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            className={`px-6 py-2 rounded-lg transition-colors ${isPremiumMovie ? "bg-amber-500 text-black hover:bg-amber-400" : "bg-red-600 text-white hover:bg-red-700"}`}
           >
             Go Back
           </button>
@@ -230,6 +250,9 @@ export default function MovieDetailsPage() {
   };
 
   const getStatusColor = (status: string) => {
+    if (isPremiumMovie) {
+      return "bg-amber-500/20 text-amber-400 border-amber-500/30";
+    }
     switch (status) {
       case "Released":
         return "bg-green-500/20 text-green-400 border-green-500/30";
@@ -265,7 +288,7 @@ export default function MovieDetailsPage() {
   };
 
   return (
-    <div className={isPremiumMovie ? "min-h-screen bg-gradient-to-br from-[#0a0a0b] via-[#1a1510] to-[#0a0a0b]" : "min-h-screen bg-[#0a0a0b]"}>
+    <div className={`min-h-screen ${isPremiumMovie ? "premium-page bg-gradient-to-br from-[#0a0a0b] via-[#1a1510] to-[#0a0a0b]" : "bg-[#0a0a0b]"}`}>
       <Navbar transparent={false} />
 
       <div className="relative">
@@ -430,19 +453,19 @@ export default function MovieDetailsPage() {
               <div className="flex flex-wrap items-center gap-6 mb-8 text-gray-300">
                 {movie.release_date && (
                   <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className={`w-5 h-5 ${isPremiumMovie ? "text-amber-400" : "text-gray-500"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span>{new Date(movie.release_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                    <span className={isPremiumMovie ? "text-amber-100/80" : ""}>{new Date(movie.release_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                   </div>
                 )}
 
                 {movie.runtime > 0 && (
                   <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className={`w-5 h-5 ${isPremiumMovie ? "text-amber-400" : "text-gray-500"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span>{formatRuntime(movie.runtime)}</span>
+                    <span className={isPremiumMovie ? "text-amber-100/80" : ""}>{formatRuntime(movie.runtime)}</span>
                   </div>
                 )}
               </div>
@@ -465,17 +488,17 @@ export default function MovieDetailsPage() {
 
               {movie.overview && (
                 <div className="mb-10">
-                  <h3 className="text-white text-2xl font-semibold mb-4">Synopsis</h3>
+                  <h3 className={`text-2xl font-semibold mb-4 ${isPremiumMovie ? "text-amber-300" : "text-white"}`}>Synopsis</h3>
                   <p 
                     ref={overviewRef}
-                    className={`text-gray-300 text-lg leading-relaxed ${!showFullOverview && "line-clamp-4"}`}
+                    className={`text-lg leading-relaxed ${!showFullOverview && "line-clamp-4"} ${isPremiumMovie ? "text-amber-100/80" : "text-gray-300"}`}
                   >
                     {movie.overview}
                   </p>
                   {showReadMore && (
                     <button
                       onClick={() => setShowFullOverview(!showFullOverview)}
-                      className="text-red-500 hover:text-red-400 mt-3 text-sm font-medium transition-colors"
+                      className={`hover:mt-3 text-sm font-medium transition-colors ${isPremiumMovie ? "text-amber-400 hover:text-amber-300" : "text-red-500 hover:text-red-400"}`}
                     >
                       {showFullOverview ? "Show less" : "Read more"}
                     </button>
@@ -485,26 +508,26 @@ export default function MovieDetailsPage() {
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10">
                 {movie.budget > 0 && (
-                  <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm p-5 rounded-xl border border-gray-700/30">
-                    <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Budget</p>
-                    <p className="text-white text-xl font-bold">{formatCurrency(movie.budget)}</p>
+                  <div className={`bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm p-5 rounded-xl border transition-all duration-300 ${isPremiumMovie ? "border-amber-500/30 hover:border-amber-400/60 hover:shadow-[0_0_15px_rgba(251,191,36,0.3)]" : "border-gray-700/30"}`}>
+                    <p className={`text-xs uppercase tracking-wider mb-1 ${isPremiumMovie ? "text-amber-400/70" : "text-gray-500"}`}>Budget</p>
+                    <p className={`text-xl font-bold ${isPremiumMovie ? "text-amber-300" : "text-white"}`}>{formatCurrency(movie.budget)}</p>
                   </div>
                 )}
                 {movie.revenue > 0 && (
-                  <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm p-5 rounded-xl border border-gray-700/30">
-                    <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Box Office</p>
-                    <p className="text-white text-xl font-bold">{formatCurrency(movie.revenue)}</p>
+                  <div className={`bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm p-5 rounded-xl border transition-all duration-300 ${isPremiumMovie ? "border-amber-500/30 hover:border-amber-400/60 hover:shadow-[0_0_15px_rgba(251,191,36,0.3)]" : "border-gray-700/30"}`}>
+                    <p className={`text-xs uppercase tracking-wider mb-1 ${isPremiumMovie ? "text-amber-400/70" : "text-gray-500"}`}>Box Office</p>
+                    <p className={`text-xl font-bold ${isPremiumMovie ? "text-amber-300" : "text-white"}`}>{formatCurrency(movie.revenue)}</p>
                   </div>
                 )}
-                <div className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm p-5 rounded-xl border border-gray-700/30">
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Popularity</p>
-                  <p className="text-white text-xl font-bold">#{Math.round(movie.popularity || 0).toLocaleString()}</p>
+                <div className={`bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm p-5 rounded-xl border transition-all duration-300 ${isPremiumMovie ? "border-amber-500/30 hover:border-amber-400/60 hover:shadow-[0_0_15px_rgba(251,191,36,0.3)]" : "border-gray-700/30"}`}>
+                  <p className={`text-xs uppercase tracking-wider mb-1 ${isPremiumMovie ? "text-amber-400/70" : "text-gray-500"}`}>Popularity</p>
+                  <p className={`text-xl font-bold ${isPremiumMovie ? "text-amber-300" : "text-white"}`}>#{Math.round(movie.popularity || 0).toLocaleString()}</p>
                 </div>
               </div>
 
               {movie.production_companies && movie.production_companies.length > 0 && (
                 <div className="mb-10">
-                  <h3 className="text-gray-500 text-sm uppercase tracking-wider mb-4">Production</h3>
+                  <h3 className={`text-sm uppercase tracking-wider mb-4 ${isPremiumMovie ? "text-amber-400/70" : "text-gray-500"}`}>Production</h3>
                   <div className="flex flex-wrap gap-4">
                     {movie.production_companies
                       .filter((company) => company.logo_path)
@@ -558,7 +581,7 @@ export default function MovieDetailsPage() {
 
               {watchProviders.length > 0 && (
                 <div className="mt-10">
-                  <h3 className="text-gray-400 text-sm uppercase tracking-wider mb-4">Watch On</h3>
+                  <h3 className={`text-sm uppercase tracking-wider mb-4 ${isPremiumMovie ? "text-amber-400/70" : "text-gray-400"}`}>Watch On</h3>
                   <div className="flex flex-wrap items-center gap-4">
                     {watchProviders.slice(0, 6).map((provider, idx) => (
                       <a
@@ -570,7 +593,7 @@ export default function MovieDetailsPage() {
                         title={`Watch on ${provider.provider_name}`}
                       >
                         {provider.logo_path ? (
-                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-800 border border-gray-700 hover:border-red-500 transition-all duration-300">
+                          <div className={`w-10 h-10 rounded-lg overflow-hidden bg-gray-800 border transition-all duration-300 ${isPremiumMovie ? "border-amber-500/30 hover:border-amber-400/60 hover:shadow-[0_0_10px_rgba(251,191,36,0.4)]" : "border-gray-700 hover:border-red-500"}`}>
                             <Image
                               src={`${TMDB_CONFIG.IMAGE_BASE_URL}/w92${provider.logo_path}`}
                               alt={provider.provider_name}
@@ -593,11 +616,14 @@ export default function MovieDetailsPage() {
 
       {cast.length > 0 && (
         <div className="px-6 lg:px-12 pb-12 max-w-7xl mx-auto">
-          <h3 className="text-white text-2xl font-semibold mb-6">Cast</h3>
+          <div className="flex items-center gap-4 mb-6">
+            <h3 className={`text-2xl font-semibold ${isPremiumMovie ? "text-amber-300" : "text-white"}`}>Cast</h3>
+            {isPremiumMovie && <div className="h-px flex-1 bg-gradient-to-r from-amber-500/50 to-transparent" />}
+          </div>
           <div className="relative group">
             <button
               onClick={() => castScrollRef.current?.scrollBy({ left: -300, behavior: "smooth" })}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-black/70 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0"
+              className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0 ${isPremiumMovie ? "bg-black/70 hover:bg-amber-500 hover:shadow-[0_0_15px_rgba(251,191,36,0.5)]" : "bg-black/70 hover:bg-red-600"}`}
             >
               <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -606,12 +632,12 @@ export default function MovieDetailsPage() {
             
             <div 
               ref={castScrollRef}
-              className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
+              className={`flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth ${isPremiumMovie ? "premium-page" : ""}`}
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               {cast.slice(0, 10).map((actor) => (
                 <div key={actor.id} className="flex-shrink-0 w-32">
-                  <div className="bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/30 hover:border-red-500/50 transition-all duration-300 hover:scale-105">
+                  <div className={`bg-gray-800/50 rounded-xl overflow-hidden border transition-all duration-300 hover:scale-105 ${isPremiumMovie ? "border-amber-500/30 hover:border-amber-400/60 hover:shadow-[0_0_15px_rgba(251,191,36,0.3)]" : "border-gray-700/30 hover:border-red-500/50"}`}>
                     {actor.profile_path ? (
                       <div className="relative w-32 h-40">
                         <Image
@@ -639,7 +665,7 @@ export default function MovieDetailsPage() {
 
             <button
               onClick={() => castScrollRef.current?.scrollBy({ left: 300, behavior: "smooth" })}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-black/70 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0"
+              className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0 ${isPremiumMovie ? "bg-black/70 hover:bg-amber-500 hover:shadow-[0_0_15px_rgba(251,191,36,0.5)]" : "bg-black/70 hover:bg-red-600"}`}
             >
               <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -651,7 +677,10 @@ export default function MovieDetailsPage() {
 
       {crew.length > 0 && (
         <div className="px-6 lg:px-12 pb-12 max-w-7xl mx-auto">
-          <h3 className="text-white text-2xl font-semibold mb-6">Crew</h3>
+          <div className="flex items-center gap-4 mb-6">
+            <h3 className={`text-2xl font-semibold ${isPremiumMovie ? "text-amber-300" : "text-white"}`}>Crew</h3>
+            {isPremiumMovie && <div className="h-px flex-1 bg-gradient-to-r from-amber-500/50 to-transparent" />}
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {crew
               .filter((member) => ["Director", "Screenplay", "Writer", "Producer", "Executive Producer", "Original Story"].includes(member.job))
@@ -720,14 +749,14 @@ export default function MovieDetailsPage() {
 
           <div ref={loaderRef} className="h-24 flex items-center justify-center">
             {loadingMore && (
-              <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
+              <div className={`w-8 h-8 border-4 border-t-transparent rounded-full animate-spin ${isPremiumMovie ? "border-amber-500" : "border-red-600"}`} />
             )}
             {!hasMoreRecommendations && recommendations.length > 0 && (
               <p className="text-gray-500">No more recommendations</p>
             )}
           </div>
 
-          {showOtherResults && otherResults.length > 0 && (
+{showOtherResults && otherResults.length > 0 && (
             <div className="mt-12">
               <h3 className="text-white text-2xl font-semibold mb-6">Other Results You May Like</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -737,7 +766,7 @@ export default function MovieDetailsPage() {
                     href={`/movie/${rec.id}`}
                     className="group"
                   >
-<div className={`bg-gray-800/50 rounded-xl overflow-hidden border transition-all duration-300 hover:scale-105 ${isPremiumMovie ? "border-amber-500/30 hover:border-amber-400/60 hover:shadow-[0_0_15px_rgba(251,191,36,0.3)]" : "border-gray-700/30 hover:border-red-500/50"}`}>
+                    <div className="bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/30 hover:border-red-500/50 transition-all duration-300 hover:scale-105">
                       {rec.poster_path ? (
                         <div className="relative aspect-[2/3]">
                           <Image
