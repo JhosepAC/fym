@@ -44,6 +44,7 @@ export default function SeriesDetailsPage() {
   const [showTrailerModal, setShowTrailerModal] = useState(false);
   const overviewRef = React.useRef<HTMLParagraphElement>(null);
   const castScrollRef = React.useRef<HTMLDivElement>(null);
+  const [castHasOverflow, setCastHasOverflow] = useState(false);
 
   const seriesId = Number(params.id);
 
@@ -164,6 +165,17 @@ export default function SeriesDetailsPage() {
     (v) => v.type === "Trailer" && v.site === "YouTube"
   );
   const trailerUrl = trailer ? `https://www.youtube.com/watch?v=${trailer.key}` : null;
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (castScrollRef.current) {
+        setCastHasOverflow(castScrollRef.current.scrollWidth > castScrollRef.current.clientWidth);
+      }
+    };
+    checkOverflow();
+    window.addEventListener('resize', checkOverflow);
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [cast]);
 
   if (loading) {
     return (
@@ -443,17 +455,19 @@ export default function SeriesDetailsPage() {
           </div>
 
           {cast.length > 0 && (
-            <div className="px-6 lg:px-12 pb-12 max-w-7xl mx-auto">
+            <div className="px-6 lg:px-12 pt-12 pb-12 max-w-7xl mx-auto">
               <h3 className="text-white text-2xl font-semibold mb-6">Cast</h3>
               <div className="relative group">
-                <button
-                  onClick={() => castScrollRef.current?.scrollBy({ left: -300, behavior: "smooth" })}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-black/70 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0"
-                >
-                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
+                {castHasOverflow && (
+                  <button
+                    onClick={() => castScrollRef.current?.scrollBy({ left: -300, behavior: "smooth" })}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-black/70 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0"
+                  >
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                )}
                 
                 <div 
                   ref={castScrollRef}
@@ -488,14 +502,16 @@ export default function SeriesDetailsPage() {
                   ))}
                 </div>
 
-                <button
-                  onClick={() => castScrollRef.current?.scrollBy({ left: 300, behavior: "smooth" })}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-black/70 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0"
+                {castHasOverflow && (
+                  <button
+                    onClick={() => castScrollRef.current?.scrollBy({ left: 300, behavior: "smooth" })}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-black/70 hover:bg-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0"
                 >
                   <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
+                )}
               </div>
             </div>
           )}
