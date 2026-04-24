@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { getImageUrl, IMAGE_SIZES } from "@/lib/api";
+import { apiClient, getImageUrl, IMAGE_SIZES } from "@/lib/api";
 import { MediaItem, Video } from "@/lib/api/client";
 import { useRouter } from "next/navigation";
 
@@ -32,15 +32,12 @@ export default function HeroBanner({ items, currentIndex, onIndexChange }: HeroB
       
       try {
         const type = mediaType === "tv" ? "tv" : "movie";
-        const res = await fetch(
-          `https://api.themoviedb.org/3/${type}/${item.id}/videos?api_key=057a69a9b8b39aa9ab75e749e7113b80&language=en-US`
-        );
-        const data = await res.json();
+        const data = await apiClient.getMediaVideos(type, item.id);
         const videoList = data.results || [];
         setVideos(videoList);
         
-        const officialTrailer = videoList.find((v: any) => v.type === "Trailer" && v.site === "YouTube" && v.official === true);
-        const anyTrailer = videoList.find((v: any) => v.type === "Trailer" && v.site === "YouTube");
+        const officialTrailer = videoList.find((v: Video) => v.type === "Trailer" && v.site === "YouTube" && v.official === true);
+        const anyTrailer = videoList.find((v: Video) => v.type === "Trailer" && v.site === "YouTube");
         setTrailer(officialTrailer || anyTrailer || null);
       } catch (error) {
         console.error("Error fetching videos:", error);
