@@ -14,7 +14,8 @@ body {
 }
 
 ::-webkit-scrollbar {
-  height: 8px;
+  height: 5px;
+  width: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -22,12 +23,13 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3A3A3C;
-  border-radius: 4px;
+  background: linear-gradient(90deg, #DC2626, #EF4444);
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #4A4A4C;
+  background: linear-gradient(90deg, #EF4444, #F87171);
+  box-shadow: 0 0 8px rgba(220, 38, 38, 0.5);
 }
 
 @theme inline {
