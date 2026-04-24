@@ -4,8 +4,8 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import { getImageUrl, IMAGE_SIZES } from "@/lib/api";
-import { MediaItem } from "@/lib/api/client";
+import { apiClient, getImageUrl, IMAGE_SIZES } from "@/lib/api";
+import { ApiResponse, MediaItem } from "@/lib/api/client";
 
 type MediaType = "all" | "movie" | "tv";
 
@@ -39,10 +39,7 @@ function SearchContent() {
     setError(null);
 
     try {
-      const res = await fetch(
-        `https://api.themoviedb.org/3/search/multi?api_key=057a69a9b8b39aa9ab75e749e7113b80&language=en-US&query=${encodeURIComponent(query)}&page=${page}&include_adult=false`
-      );
-      const data = await res.json();
+      const data = await apiClient.getSearchResults("multi", query, page);
       
       if (isLoadMore) {
         setResults(prev => [...prev, ...(data.results || [])]);
@@ -71,13 +68,10 @@ function SearchContent() {
     setShowOtherResults(true);
     
     try {
-      const [movieRes, tvRes] = await Promise.all([
-        fetch(`https://api.themoviedb.org/3/search/movie?api_key=057a69a9b8b39aa9ab75e749e7113b80&language=en-US&query=${encodeURIComponent(query)}&page=1`),
-        fetch(`https://api.themoviedb.org/3/search/tv?api_key=057a69a9b8b39aa9ab75e749e7113b80&language=en-US&query=${encodeURIComponent(query)}&page=1`)
+      const [movieData, tvData] = await Promise.all([
+        apiClient.searchMovies(query, 1),
+        apiClient.searchTvShows(query, 1)
       ]);
-      
-      const movieData = await movieRes.json();
-      const tvData = await tvRes.json();
       
       const combinedResults = [...(movieData.results || []), ...(tvData.results || [])];
       const uniqueResults = combinedResults.filter((item: MediaItem, index: number, self: MediaItem[]) => 
