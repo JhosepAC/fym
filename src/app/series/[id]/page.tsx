@@ -49,6 +49,9 @@ export default function SeriesDetailsPage() {
   const [showOtherResults, setShowOtherResults] = useState(false);
   const [otherResults, setOtherResults] = useState<MediaItem[]>([]);
   const loaderRef = useRef<HTMLDivElement>(null);
+  const seasonPanelRef = useRef<HTMLDivElement>(null);
+  const episodesPanelRef = useRef<HTMLDivElement>(null);
+  const [episodesHeight, setEpisodesHeight] = useState<string>('auto');
   const overviewRef = React.useRef<HTMLParagraphElement>(null);
   const castScrollRef = React.useRef<HTMLDivElement>(null);
   const [castHasOverflow, setCastHasOverflow] = useState(false);
@@ -246,6 +249,13 @@ export default function SeriesDetailsPage() {
     window.addEventListener('resize', checkOverflow);
     return () => window.removeEventListener('resize', checkOverflow);
   }, [cast]);
+
+  useEffect(() => {
+    if (seasonPanelRef.current && episodesPanelRef.current) {
+      const seasonHeight = seasonPanelRef.current.offsetHeight;
+      setEpisodesHeight(`${seasonHeight}px`);
+    }
+  }, [seasonDetails]);
 
   if (loading) {
     return (
@@ -613,10 +623,10 @@ export default function SeriesDetailsPage() {
                   <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  <div className="lg:col-span-1">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                  <div className="lg:col-span-1" ref={seasonPanelRef}>
                     {seasonDetails && (
-                      <div className="sticky top-24 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-white/10">
+                      <div className="sticky top-24 bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-white/10 h-full">
                         {seasonDetails.poster_path ? (
                           <div 
                             className="relative w-full aspect-[2/3] mb-4 rounded-xl overflow-hidden cursor-pointer group"
@@ -698,7 +708,7 @@ export default function SeriesDetailsPage() {
                     )}
                   </div>
                   
-                  <div className="lg:col-span-2 space-y-5 max-h-[70vh] overflow-y-auto pr-2">
+                  <div className="lg:col-span-2 space-y-5 overflow-y-auto pr-2" ref={episodesPanelRef} style={{ maxHeight: episodesHeight }}>
                     {seasonEpisodes.map((episode) => (
                       <div
                         key={episode.id}
