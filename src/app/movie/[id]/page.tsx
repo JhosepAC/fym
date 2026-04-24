@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -25,6 +25,12 @@ export default function MovieDetailsPage() {
   const [showReadMore, setShowReadMore] = useState(false);
   const [showPosterModal, setShowPosterModal] = useState(false);
   const [showTrailerModal, setShowTrailerModal] = useState(false);
+  const [recommendationsPage, setRecommendationsPage] = useState(1);
+  const [hasMoreRecommendations, setHasMoreRecommendations] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [showOtherResults, setShowOtherResults] = useState(false);
+  const [otherResults, setOtherResults] = useState<MediaItem[]>([]);
+  const loaderRef = useRef<HTMLDivElement>(null);
   const overviewRef = React.useRef<HTMLParagraphElement>(null);
   const castScrollRef = React.useRef<HTMLDivElement>(null);
 
@@ -75,6 +81,62 @@ export default function MovieDetailsPage() {
 
     fetchMovie();
   }, [movieId]);
+
+  const loadMoreRecommendations = useCallback(async () => {
+    if (loadingMore || !hasMoreRecommendations) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = recommendationsPage + 1;
+      const data = await apiClient.getMovieRecommendations(movieId, nextPage);
+      if (data.results && data.results.length > 0) {
+        setRecommendations(prev => [...prev, ...data.results]);
+        setRecommendationsPage(nextPage);
+        if (data.results.length < 20 || nextPage >= 3) {
+          setHasMoreRecommendations(false);
+        }
+      } else {
+        setHasMoreRecommendations(false);
+      }
+    } catch (error) {
+      console.error("Error loading more recommendations:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [movieId, recommendationsPage, loadingMore, hasMoreRecommendations]);
+
+  const loadOtherResults = useCallback(async () => {
+    if (showOtherResults) return;
+    setShowOtherResults(true);
+    try {
+      const data = await apiClient.getMovieSimilar(movieId, 1);
+      setOtherResults(data.results || []);
+    } catch (error) {
+      console.error("Error loading similar movies:", error);
+    }
+  }, [movieId, showOtherResults]);
+
+  useEffect(() => {
+    if (!hasMoreRecommendations || recommendations.length < 10) return;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loadingMore) {
+          if (recommendationsPage >= 3 && hasMoreRecommendations) {
+            loadOtherResults();
+          } else {
+            loadMoreRecommendations();
+          }
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMoreRecommendations, recommendationsPage, loadingMore, recommendations.length, loadMoreRecommendations, loadOtherResults]);
 
   useEffect(() => {
     if (movie && overviewRef.current) {
@@ -543,9 +605,9 @@ export default function MovieDetailsPage() {
         <div className="px-6 lg:px-12 pb-12 max-w-7xl mx-auto">
           <h3 className="text-white text-2xl font-semibold mb-6">Recommended Movies</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {recommendations.slice(0, 10).map((rec) => (
+            {recommendations.map((rec, idx) => (
               <Link
-                key={rec.id}
+                key={`${rec.id}-${idx}`}
                 href={`/movie/${rec.id}`}
                 className="group"
               >
@@ -574,6 +636,53 @@ export default function MovieDetailsPage() {
               </Link>
             ))}
           </div>
+
+          <div ref={loaderRef} className="h-24 flex items-center justify-center">
+            {loadingMore && (
+              <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
+            )}
+            {!hasMoreRecommendations && recommendations.length > 0 && (
+              <p className="text-gray-500">No more recommendations</p>
+            )}
+          </div>
+
+          {showOtherResults && otherResults.length > 0 && (
+            <div className="mt-12">
+              <h3 className="text-white text-2xl font-semibold mb-6">Other Results You May Like</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {otherResults.map((rec, idx) => (
+                  <Link
+                    key={`other-${rec.id}-${idx}`}
+                    href={`/movie/${rec.id}`}
+                    className="group"
+                  >
+                    <div className="bg-gray-800/50 rounded-xl overflow-hidden border border-gray-700/30 hover:border-red-500/50 transition-all duration-300 hover:scale-105">
+                      {rec.poster_path ? (
+                        <div className="relative aspect-[2/3]">
+                          <Image
+                            src={getImageUrl(rec.poster_path, IMAGE_SIZES.poster.original) || ""}
+                            alt={rec.title || ""}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-[2/3] bg-gray-800" />
+                      )}
+                      <div className="p-3">
+                        <p className="text-white text-sm font-medium truncate group-hover:text-red-400 transition-colors">
+                          {rec.title}
+                        </p>
+                        <p className="text-gray-500 text-xs">
+                          {rec.vote_average?.toFixed(1)} ★
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

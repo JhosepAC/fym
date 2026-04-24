@@ -62,6 +62,14 @@ class ApiClient {
     return this.fetch<ApiResponse>(ENDPOINTS.movie.recommendations(id), { page: String(page) });
   }
 
+  async getTvSimilar(id: number, page: number = 1) {
+    return this.fetch<ApiResponse>(ENDPOINTS.tv.similar(id), { page: String(page) });
+  }
+
+  async getTvRecommendations(id: number, page: number = 1) {
+    return this.fetch<ApiResponse>(ENDPOINTS.tv.recommendations(id), { page: String(page) });
+  }
+
   async getMovieCredits(id: number) {
     return this.fetch<CreditsResponse>(ENDPOINTS.movie.credits(id));
   }
@@ -84,10 +92,6 @@ class ApiClient {
 
   async getTvDetails(id: number) {
     return this.fetch<TvShowDetail>(ENDPOINTS.tv.details(id));
-  }
-
-  async getTvRecommendations(id: number, page: number = 1) {
-    return this.fetch<ApiResponse>(ENDPOINTS.tv.recommendations(id), { page: String(page) });
   }
 
   async getTvCredits(id: number) {
