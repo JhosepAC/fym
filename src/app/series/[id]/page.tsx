@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
@@ -11,6 +11,7 @@ import { TvShowDetail, Video, MediaItem, Cast, Crew, WatchProvider, TvSeason, Tv
 export default function SeriesDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [series, setSeries] = useState<TvShowDetail | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [recommendations, setRecommendations] = useState<MediaItem[]>([]);
@@ -47,6 +48,13 @@ export default function SeriesDetailsPage() {
   const [castHasOverflow, setCastHasOverflow] = useState(false);
 
   const seriesId = Number(params.id);
+  const shouldPlayTrailer = searchParams.get("play") === "true";
+
+  useEffect(() => {
+    if (shouldPlayTrailer && videos.length > 0) {
+      setShowTrailerModal(true);
+    }
+  }, [shouldPlayTrailer, videos]);
 
   useEffect(() => {
     async function fetchSeries() {
@@ -63,7 +71,7 @@ export default function SeriesDetailsPage() {
           apiClient.getTvVideos(seriesId),
           apiClient.getTvRecommendations(seriesId),
           apiClient.getTvCredits(seriesId),
-          apiClient.getMovieWatchProviders(seriesId),
+          apiClient.getTvWatchProviders(seriesId),
         ]);
         setSeries(seriesData);
         setVideos(videosData.results || []);

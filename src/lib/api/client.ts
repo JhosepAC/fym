@@ -11,7 +11,7 @@ class ApiClient {
     this.language = TMDB_CONFIG.LANGUAGE;
   }
 
-  private async fetch<T>(endpoint: string, params: Record<string, string> = {}): Promise<T> {
+  async fetch<T>(endpoint: string, params: Record<string, string> = {}): Promise<T> {
     const url = new URL(`${this.baseUrl}${endpoint}`);
     url.searchParams.append("api_key", this.apiKey);
     url.searchParams.append("language", this.language);
@@ -92,6 +92,20 @@ class ApiClient {
 
   async getTvCredits(id: number) {
     return this.fetch<CreditsResponse>(ENDPOINTS.tv.credits(id));
+  }
+
+  async getTvWatchProviders(id: number) {
+    return this.fetch<WatchProvidersResponse>(ENDPOINTS.tv.watchProviders(id));
+  }
+
+  async discoverMovies(genre: number, page: number = 1, sortBy: string = "popularity.desc") {
+    const endpoint = ENDPOINTS.movie.discover(genre, page, sortBy);
+    return this.fetch<ApiResponse>(endpoint);
+  }
+
+  async discoverSeries(genre: number, page: number = 1, sortBy: string = "popularity.desc") {
+    const endpoint = ENDPOINTS.tv.discover(genre, page, sortBy);
+    return this.fetch<ApiResponse>(endpoint);
   }
 
   async getTvSeasonDetails(id: number, seasonNumber: number) {

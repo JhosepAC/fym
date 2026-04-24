@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
@@ -11,6 +11,7 @@ import { MovieDetail, Video, MediaItem, Cast, Crew, WatchProvider } from "@/lib/
 export default function MovieDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [movie, setMovie] = useState<MovieDetail | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [recommendations, setRecommendations] = useState<MediaItem[]>([]);
@@ -28,6 +29,13 @@ export default function MovieDetailsPage() {
   const castScrollRef = React.useRef<HTMLDivElement>(null);
 
   const movieId = Number(params.id);
+  const shouldPlayTrailer = searchParams.get("play") === "true";
+
+  useEffect(() => {
+    if (shouldPlayTrailer && videos.length > 0) {
+      setShowTrailerModal(true);
+    }
+  }, [shouldPlayTrailer, videos]);
 
   useEffect(() => {
     async function fetchMovie() {
