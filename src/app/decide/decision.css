@@ -824,3 +824,14 @@
     transition: none !important;
   }
 }
+.decision-genres button,
+.decision-section-heading p,
+.selection-provenance,
+.wheel-list a {
+  font-size: 13px;
+}
+.decision-card-action,
+.wheel-fairness,
+.wheel-empty p {
+  font-size: 12px;
+}

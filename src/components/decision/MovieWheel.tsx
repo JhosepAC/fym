@@ -178,7 +178,9 @@ export default function MovieWheel({
       <p className="wheel-fairness">
         {movies.length >= 2
           ? `Todas tienen la misma probabilidad: 1 entre ${movies.length}.`
-          : "Elige tus candidatas en el catálogo."}
+          : movies.length === 1
+            ? "Añade otra película para poder girar."
+            : "Elige tus candidatas en el catálogo."}
       </p>
       <div
         className="wheel-result"
