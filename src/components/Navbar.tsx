@@ -45,6 +45,7 @@ export default function Navbar({ onSearch, initialQuery = "" }: NavbarProps) {
     { href: "/", label: "Descubre" },
     { href: "/movies", label: "Películas" },
     { href: "/series", label: "Series" },
+    { href: "/decide", label: "Elige por mí" },
   ];
   return (
     <header className="site-header">

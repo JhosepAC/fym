@@ -14,7 +14,8 @@
   --text: #fff;
   --muted: #b4b4b4;
   --faint: #949494;
-  --accent: #e5b863;
+  --brand: #dc283a;
+  --accent: #ff7b83;
   --negative: #ff9d9d;
   --radius: 16px;
   --ease: cubic-bezier(0.23, 1, 0.32, 1);
@@ -133,7 +134,7 @@ svg {
   font-size: 12px;
 }
 .rating {
-  color: var(--accent);
+  color: var(--text);
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -1806,5 +1807,33 @@ dialog::backdrop {
   }
   .mobile-surprise .surprise p {
     font-size: 12px;
+  }
+}
+.brand > svg {
+  color: var(--brand);
+}
+@media (min-width: 901px) and (max-width: 1150px) {
+  .nav-search {
+    width: 220px;
+  }
+  .nav-inner {
+    gap: 24px;
+  }
+  .desktop-nav {
+    gap: 18px;
+  }
+}
+@media (min-width: 651px) and (max-width: 900px) {
+  .nav-inner {
+    gap: 18px;
+  }
+  .desktop-nav {
+    gap: 16px;
+  }
+  .desktop-nav a {
+    font-size: 12px;
+  }
+  .nav-search {
+    width: 190px;
   }
 }
