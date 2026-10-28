@@ -1,88 +1,110 @@
+<div align="center">
+
 # FyM — Find Your Movie
 
-Una plataforma para descubrir películas y series, consultar dónde verlas y organizar una lista personal. Construida con **Next.js 16, React 19, TypeScript y Tailwind CSS 4**, con datos reales de TMDB.
+**Discover your next story. Build your watchlist. Let movie night decide.**
 
-## Qué puedes hacer
+[![Live demo](https://img.shields.io/badge/Demo-Visit_FyM-dc283a?style=for-the-badge)](https://fym-jac.vercel.app)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=nextdotjs)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19-20232a?style=for-the-badge&logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-- Explorar tendencias, títulos populares, mejor valorados, próximos estrenos y series en emisión.
-- Filtrar por género, año y valoración; ordenar y cargar más resultados del catálogo completo. Los filtros quedan en la URL.
-- Buscar películas y series con escritura diferida y filtros por tipo de contenido.
-- Consultar sinopsis, reparto, equipo, producción, recaudación, tráileres y títulos relacionados.
-- Seleccionar un país para consultar proveedores de suscripción, alquiler y compra.
-- Recorrer temporadas, episodios, imágenes, vídeos y colecciones.
-- Guardar títulos en **Mi lista**, marcarlos como vistos y buscar u ordenar la biblioteca.
-- Entrar en **Elige por mí** desde la navegación o el inicio: combinar géneros, reparto, años, valoración mínima y duración; priorizar popularidad, valoración o estrenos y obtener 6, 9 o 12 candidatas.
-- Preparar una ruleta con la selección, buscar películas propias o importar pendientes de **Mi lista**. Añadir o retirar títulos, girar y guardar la ganadora.
+[Live demo](https://fym-jac.vercel.app) · [Report a bug](https://github.com/JhosepAC/fym/issues) · [Suggest a feature](https://github.com/JhosepAC/fym/issues)
 
-La interfaz está en español y se adapta a escritorio, tablet y móvil. Incluye navegación por teclado, diálogos accesibles, movimiento reducido y estados de carga, error y ausencia de resultados.
+**[English documentation](docs/en/README.md) · [Documentación en español](docs/es/README.md)**
 
-## Ejecutar
+</div>
 
-Se recomienda Node.js 24 para ejecutar también las pruebas de TypeScript con el runtime nativo.
+## Overview
 
-```powershell
-npm install
+FyM is a film and TV discovery application built by **[Jhosep Argomedo](https://jhosep-ac.pages.dev/)**. Browse real TMDB data, compare details and viewing providers, organize a personal library, and turn a shortlist into a decision with a movie roulette.
+
+The product uses a custom SVG identity and a black, white and red interface. The application UI is currently in Spanish; project documentation is available in both English and Spanish.
+
+## Highlights
+
+| Explore                                           | Organize                                            | Decide                                            |
+| ------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------- |
+| Trending titles, remote filters and search        | Browser-local watchlist with pending/watched states | Genre, cast, year, runtime and rating preferences |
+| Cast, trailers, collections, seasons and episodes | Local search, sorting and persistent saves          | 6, 9 or 12 suggested candidates                   |
+| Streaming providers by country                    | No account required                                 | Custom roulette from searches or pending films    |
+
+Responsive layouts, keyboard navigation, visible focus and reduced-motion support are built into the main flows. Credentials stay in server-only modules; interactive catalogue requests use restricted local API routes.
+
+## Tech stack
+
+**Next.js 16 · React 19 · TypeScript 5 · Tailwind CSS 4 · TMDB**
+
+App Router and server components provide initial data. Client components manage search, filters, the local library and roulette. ESLint, TypeScript and Node's test runner support validation. See [Architecture](docs/en/ARCHITECTURE.md) for boundaries and tradeoffs.
+
+## Getting started
+
+Use **Node.js 24** and npm.
+
+```bash
+git clone https://github.com/JhosepAC/fym.git
+cd fym
+npm ci
 ```
 
-Crea `.env.local` en la raíz:
+Create `.env.local` in the project root:
 
 ```dotenv
-TMDB_API_KEY=tu_clave_de_tmdb
+TMDB_API_KEY=your_tmdb_api_key
 ```
 
-```powershell
+```bash
 npm run dev
 ```
 
-Abre [localhost:3000](http://localhost:3000). Para producción:
+Open [localhost:3000](http://localhost:3000). Keep credentials out of source control. For production, run `npm run build`, then `npm run start`.
 
-```powershell
-npm run build
-npm run start
-```
+## Quality checks
 
-La clave se utiliza en el servidor. Las consultas interactivas pasan por `/api/tmdb/...`, que restringe los endpoints permitidos y maneja los fallos del proveedor. La variable antigua `NEXT_PUBLIC_TMDB_API_KEY` se admite en el servidor por compatibilidad; utiliza `TMDB_API_KEY` en instalaciones nuevas.
-
-## Calidad
-
-```powershell
+```bash
 npm run lint
 npm test
 npm run build
 ```
 
-Las pruebas cubren identidad, metadatos incompletos, validación de preferencias, datos públicos, persistencia dañada y correspondencia entre los sectores de la ruleta y la ganadora. Para ejecutar también las pruebas de API contra una instancia en ejecución con TMDB configurado:
+Domain tests cover media identity, preference validation, public fields, storage and roulette geometry. Three live API tests are opt-in: run a configured application and set `FYM_TEST_URL` before `npm test`. See [test commands for PowerShell and POSIX shells](docs/en/README.md#commands-and-checks).
 
-```powershell
-$env:FYM_TEST_URL = "http://localhost:3000"
-npm test
-```
-
-El rediseño se verifica también en un navegador real con los flujos de biblioteca, búsqueda, filtros, fichas, temporadas, colecciones y ruleta.
-
-## Organización
+## Project structure
 
 ```text
-src/app/                 Rutas, estados globales y proxy TMDB
-src/components/          Componentes visuales y flujos reutilizables
-src/lib/api/client.ts    Cliente y contratos tipados
-src/lib/api/server.ts    Cliente exclusivo de servidor con credenciales
-src/lib/media.ts         Identidad, rutas y metadatos comunes
-src/lib/decision.ts      Validación, candidatas, persistencia y geometría de ruleta
-src/lib/decision-server.ts Selección aleatoria exclusiva del servidor
-tests/                   Pruebas de dominio
+fym/
+├── docs/
+│   ├── en/               English guides
+│   └── es/               Spanish guides
+├── public/               Static assets and custom SVG logo
+├── src/
+│   ├── app/              Pages, metadata and local API routes
+│   ├── components/       Shared UI and product flows
+│   └── lib/              Typed data access and domain logic
+└── tests/                Domain and opt-in API tests
 ```
 
-Consulta [ARCHITECTURE.md](ARCHITECTURE.md) para entender el flujo de datos, la concurrencia y las decisiones técnicas; [DESIGN.md](DESIGN.md) recoge el sistema visual y [PRODUCT.md](PRODUCT.md), el alcance del producto.
+## Documentation
 
-## Persistencia y límites
+| Guide                                           | English                         | Español                         |
+| ----------------------------------------------- | ------------------------------- | ------------------------------- |
+| Features, setup and contribution workflow       | [Read](docs/en/README.md)       | [Leer](docs/es/README.md)       |
+| Architecture, data flow and security boundaries | [Read](docs/en/ARCHITECTURE.md) | [Leer](docs/es/ARCHITECTURE.md) |
+| Design system and interaction patterns          | [Read](docs/en/DESIGN.md)       | [Leer](docs/es/DESIGN.md)       |
+| Product scope and principles                    | [Read](docs/en/PRODUCT.md)      | [Leer](docs/es/PRODUCT.md)      |
 
-La biblioteca y la ruleta se guardan en este navegador mediante `localStorage`. No requieren cuenta ni se sincronizan entre dispositivos. Borrar los datos del navegador elimina ambas listas. La ruleta admite de 2 a 12 películas y cada candidata tiene la misma probabilidad. El catálogo propuesto se extrae de hasta las primeras cinco páginas que TMDB devuelve para tus preferencias: no representa una muestra uniforme de todo su catálogo. FyM es un explorador: no reproduce películas ni vende suscripciones. La disponibilidad depende de la información que TMDB recibe de JustWatch y puede cambiar.
+Keep both languages aligned when changing behavior. Root context files remain as English entry points for repository tooling.
 
-## Desarrollo con Gitflow
+## Development workflow
 
-`master` conserva la línea de publicación; `develop` integra el trabajo. Cada funcionalidad parte de `develop` en una rama `feature/<nombre>` y vuelve mediante merge sin fast-forward. Los commits siguen Conventional Commits y se firman según la configuración SSH del desarrollador. La preparación de una publicación utiliza `release/<versión>` y las correcciones urgentes, `hotfix/<nombre>`. Las credenciales y claves privadas no se versionan.
+Use Gitflow: branch `feature/<name>` from `develop`, make signed Conventional Commits, run relevant checks, and open a PR against `develop`. Integrate with a merge commit. `master` is the publication line; `release/<version>` and `hotfix/<name>` cover release preparation and urgent fixes.
 
-Los datos, valoraciones e imágenes pertenecen a sus respectivos titulares y se obtienen de TMDB. Este producto utiliza la API de TMDB, pero no está avalado ni certificado por TMDB. Los tráileres se reproducen desde YouTube.
+## Limits and attribution
 
-Proyecto de Jhosep Argomedo. Código bajo licencia MIT.
+The library and roulette persist only in this browser; clearing its data removes them. There is no account, cloud backup or device synchronization. Each selected roulette candidate has equal probability. Suggested films come from a prioritized sample of up to 100 results, not a uniform draw from all of TMDB. FyM does not stream films or sell subscriptions.
+
+Data and images come from TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB. Provider availability is supplied through TMDB/JustWatch; trailers use YouTube. No `LICENSE` file is currently included in this repository.
+
+## Author
+
+Developed by **[Jhosep Argomedo](https://jhosep-ac.pages.dev/)** · [GitHub](https://github.com/JhosepAC) · [Issues and ideas](https://github.com/JhosepAC/fym/issues).

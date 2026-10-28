@@ -1,34 +1,39 @@
-# FyM — Find Your Movie
+# FyM — Product
 
 <!-- impeccable:product-schema 1 -->
+
+Full guide: [English](docs/en/PRODUCT.md) · [Español](docs/es/PRODUCT.md)
 
 ## Platform
 
 web
 
-## Product Purpose
+## Purpose and users
 
-Explorar películas y series, consultar sus fichas y decidir qué ver. El usuario solicita un producto completo y coherente, con mejoras visuales y funcionales, con calidad de proyecto de egreso de ingeniería de software.
+Help people discover films and series, compare their details, find viewing providers and decide what to watch. The intended audience is inferred from the application's discovery, detail and watchlist flows. The requested quality is a coherent, complete software engineering graduation project.
 
-## Users
+## Platform and capabilities
 
-Personas que buscan películas o series y necesitan comparar sinopsis, valoración, reparto y disponibilidad. Audiencia inferida de las rutas y funciones existentes.
+Web application built with Next.js 16, React 19, TypeScript and Tailwind 4. Preserve real TMDB catalogues, search, filters, film and series details, seasons, episodes, collections, cast, trailers and country-specific providers.
 
-## Capabilities and Constraints
+The personal library supports pending and watched titles. **Elige por mí** combines genre, cast, year, rating, runtime and priority filters with suggested candidates and a personal roulette. Users can search for their own films or import pending library items. Both collections persist locally.
 
-Next.js 16, React 19, TypeScript y Tailwind 4. Conservar el catálogo TMDB, búsqueda, filtros, fichas de películas y series, temporadas, episodios, colecciones, reparto, tráileres y proveedores. Lista personal persistente y «Elige por mí»: selección de películas por géneros, reparto, años, valoración, duración y prioridad; catálogo de candidatas y ruleta personal con búsqueda e importación de pendientes. Biblioteca y ruleta se guardan localmente. No existe autenticación ni sincronización entre dispositivos. Credenciales y consultas autenticadas a TMDB permanecen en el servidor.
+## Constraints and evidence
 
-## Evidence on Hand
+- No authentication, cloud storage or synchronization between devices.
+- Credentials and authenticated TMDB requests remain on the server.
+- Use actual TMDB data and images; never invent ratings, availability or catalogue content.
+- Show understandable failures and empty states; allow provider-country selection.
+- Explain bounded discovery sampling and equal probabilities within the selected roulette.
+- The product UI is Spanish. Bilingual documentation does not imply application localization.
 
-Datos e imágenes de TMDB; no inventar valoraciones, disponibilidad o contenido. Mostrar fallos y estados vacíos explícitos. El país de disponibilidad debe poder seleccionarse.
+## Brand commitments
 
-## Brand Commitments
+FyM / Find Your Movie uses the explicitly requested black, white and red palette. Its custom SVG wordmark uses F/y/M letterforms and a red projection cut. The decision tool is available from the home page and navigation, with a prominent red action. The footer credits Jhosep Argomedo and links to his portfolio.
 
-Nombre FyM / Find Your Movie. El usuario autoriza reemplazar la identidad visual y añadir funcionalidades pertinentes. Colores principales indicados explícitamente por el usuario: negro, blanco y rojo. La nueva función debe estar disponible desde la navegación y el inicio, y permitir tanto descubrir candidatas como construir una ruleta propia.
+## Principles
 
-## Product Principles
-
-- Descubrir, evaluar y guardar en un flujo continuo.
-- Datos reales y estados de error comprensibles.
-- Navegación consistente y accesible en móvil y escritorio.
-- Componentes reutilizables y documentación mantenible.
+- Connect discovery, evaluation, saving and decision-making.
+- Present real data and actionable error states.
+- Keep navigation consistent and accessible on mobile and desktop.
+- Use reusable components and maintain both documentation languages.
