@@ -16,7 +16,7 @@ Personas que buscan películas o series y necesitan comparar sinopsis, valoraci�
 
 ## Capabilities and Constraints
 
-Next.js 16, React 19, TypeScript y Tailwind 4. Conservar el catálogo TMDB, búsqueda, filtros, fichas de películas y series, temporadas, episodios, colecciones, reparto, tráileres y proveedores. Respetar cambios locales previos. Lista personal persistente autorizada como parte de las mejoras propuestas. No existe autenticación ni sincronización entre dispositivos.
+Next.js 16, React 19, TypeScript y Tailwind 4. Conservar el catálogo TMDB, búsqueda, filtros, fichas de películas y series, temporadas, episodios, colecciones, reparto, tráileres y proveedores. Lista personal persistente y «Elige por mí»: selección de películas por géneros, reparto, años, valoración, duración y prioridad; catálogo de candidatas y ruleta personal con búsqueda e importación de pendientes. Biblioteca y ruleta se guardan localmente. No existe autenticación ni sincronización entre dispositivos. Credenciales y consultas autenticadas a TMDB permanecen en el servidor.
 
 ## Evidence on Hand
 
@@ -24,7 +24,7 @@ Datos e imágenes de TMDB; no inventar valoraciones, disponibilidad o contenido.
 
 ## Brand Commitments
 
-Nombre FyM / Find Your Movie. El usuario autoriza reemplazar la identidad visual y añadir funcionalidades pertinentes.
+Nombre FyM / Find Your Movie. El usuario autoriza reemplazar la identidad visual y añadir funcionalidades pertinentes. Colores principales indicados explícitamente por el usuario: negro, blanco y rojo. La nueva función debe estar disponible desde la navegación y el inicio, y permitir tanto descubrir candidatas como construir una ruleta propia.
 
 ## Product Principles
 
