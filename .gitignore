@@ -40,3 +40,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Agents
+.agents/
+
+# Local design inspection and browser captures
+.taste-skill/
+.impeccable/review/

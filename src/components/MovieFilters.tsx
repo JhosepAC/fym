@@ -59,7 +59,8 @@ const TV_GENRES = [
   { id: 37, name: "Western" },
 ];
 
-const getGenres = (mediaType: "movie" | "tv") => mediaType === "movie" ? MOVIE_GENRES : TV_GENRES;
+const getGenres = (mediaType: "movie" | "tv") =>
+  mediaType === "movie" ? MOVIE_GENRES : TV_GENRES;
 
 const SORT_OPTIONS = [
   { value: "popularity.desc", label: "Most Popular" },
@@ -75,7 +76,10 @@ const YEARS = Array.from({ length: 50 }, (_, i) => String(currentYear - i));
 
 const RATINGS = [9, 8, 7, 6, 5];
 
-export default function MovieFilters({ onFilterChange, title = "Filters", mediaType = "movie" }: MovieFiltersProps) {
+export default function MovieFilters({
+  onFilterChange,
+  mediaType = "movie",
+}: MovieFiltersProps) {
   const yearLabel = mediaType === "tv" ? "First Air Date" : "Release Year";
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
@@ -85,7 +89,10 @@ export default function MovieFilters({ onFilterChange, title = "Filters", mediaT
     sortBy: "popularity.desc",
   });
 
-  const updateFilter = <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
+  const updateFilter = <K extends keyof FilterState>(
+    key: K,
+    value: FilterState[K],
+  ) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
     onFilterChange(newFilters);
@@ -102,7 +109,8 @@ export default function MovieFilters({ onFilterChange, title = "Filters", mediaT
     onFilterChange(defaultFilters);
   };
 
-  const hasActiveFilters = filters.genre || filters.year || filters.minRating > 0;
+  const hasActiveFilters =
+    filters.genre || filters.year || filters.minRating > 0;
 
   const genres = getGenres(mediaType);
 
@@ -116,8 +124,18 @@ export default function MovieFilters({ onFilterChange, title = "Filters", mediaT
             : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:border-white/20"
         }`}
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+          />
         </svg>
         <span className="text-sm font-medium">Filters</span>
         {hasActiveFilters && (
@@ -144,7 +162,11 @@ export default function MovieFilters({ onFilterChange, title = "Filters", mediaT
                 }}
               >
                 {SORT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value} className="bg-[#1a1a1b]">
+                  <option
+                    key={option.value}
+                    value={option.value}
+                    className="bg-[#1a1a1b]"
+                  >
                     {option.label}
                   </option>
                 ))}
@@ -159,7 +181,10 @@ export default function MovieFilters({ onFilterChange, title = "Filters", mediaT
                 <select
                   value={filters.genre || ""}
                   onChange={(e) =>
-                    updateFilter("genre", e.target.value ? Number(e.target.value) : null)
+                    updateFilter(
+                      "genre",
+                      e.target.value ? Number(e.target.value) : null,
+                    )
                   }
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500 transition-colors appearance-none cursor-pointer"
                   style={{
@@ -173,7 +198,11 @@ export default function MovieFilters({ onFilterChange, title = "Filters", mediaT
                     All Genres
                   </option>
                   {genres.map((genre: { id: number; name: string }) => (
-                    <option key={genre.id} value={genre.id} className="bg-[#1a1a1b]">
+                    <option
+                      key={genre.id}
+                      value={genre.id}
+                      className="bg-[#1a1a1b]"
+                    >
                       {genre.name}
                     </option>
                   ))}
@@ -220,7 +249,7 @@ export default function MovieFilters({ onFilterChange, title = "Filters", mediaT
                     onClick={() =>
                       updateFilter(
                         "minRating",
-                        filters.minRating === rating ? 0 : rating
+                        filters.minRating === rating ? 0 : rating,
                       )
                     }
                     className={`flex-1 min-w-[3rem] px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
