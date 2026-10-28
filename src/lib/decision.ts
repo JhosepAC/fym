@@ -69,7 +69,7 @@ export function validatePreferences(
     (p.yearFrom !== null && !integer(p.yearFrom, 1870, 2100)) ||
     (p.yearTo !== null && !integer(p.yearTo, 1870, 2100))
   )
-    return { ok: false, error: "Los años deben estar entre1870 y2100." };
+    return { ok: false, error: "Los años deben estar entre 1870 y 2100." };
   if (p.yearFrom !== null && p.yearTo !== null && p.yearFrom > p.yearTo)
     return {
       ok: false,
@@ -81,16 +81,16 @@ export function validatePreferences(
     p.minRating < 0 ||
     p.minRating > 9
   )
-    return { ok: false, error: "La valoración mínima debe estar entre0 y9." };
+    return { ok: false, error: "La valoración mínima debe estar entre 0 y 9." };
   if (p.maxRuntime !== null && !integer(p.maxRuntime, 30, 360))
     return {
       ok: false,
-      error: "La duración máxima debe estar entre30 y360 minutos.",
+      error: "La duración máxima debe estar entre 30 y 360 minutos.",
     };
   if (!["popular", "rated", "recent"].includes(p.priority))
     return { ok: false, error: "La prioridad no es válida." };
   if (![6, 9, 12].includes(p.count))
-    return { ok: false, error: "La selección debe tener6,9 o12 películas." };
+    return { ok: false, error: "La selección debe tener 6, 9 o 12 películas." };
   // Build a new object: arbitrary client fields never become provider parameters.
   return {
     ok: true,

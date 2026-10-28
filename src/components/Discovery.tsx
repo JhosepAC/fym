@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
 import type { MediaItem } from "@/lib/api";
 import HeroBannerWrapper from "./HeroBannerWrapper";
 import MovieRow from "./MovieRow";
@@ -18,36 +17,19 @@ export default function Discovery({
   topRated: MediaItem[];
   series: MediaItem[];
 }) {
-  const [pick, setPick] = useState<MediaItem | null>(null);
-  function surprise() {
-    const pool = [...trending, ...topRated].filter(
-      (item) => item.id !== pick?.id,
-    );
-    if (pool.length) setPick(pool[Math.floor(Math.random() * pool.length)]);
-  }
   const surpriseControl = (
     <div className="surprise">
       <div>
         <Icon name="shuffle" />
         <h3>¿No te decides?</h3>
       </div>
-      <p>
-        {pick ? mediaTitle(pick) : "Deja que una buena historia te encuentre."}
-      </p>
+      <p>Prepara tu selección y deja que la ruleta elija la película.</p>
       <div className="button-row">
-        <button className="text-link" onClick={surprise}>
-          {pick ? "Elegir otra" : "Elige por mí"}
+        <Link className="text-link" href="/decide">
+          Elige por mí
           <Icon name="arrow" size={15} />
-        </button>
-        {pick && (
-          <Link className="text-link" href={mediaHref(pick)}>
-            Ver ficha
-          </Link>
-        )}
+        </Link>
       </div>
-      <span className="sr-only" role="status">
-        {pick ? `Tu selección: ${mediaTitle(pick)}` : ""}
-      </span>
     </div>
   );
   return (

@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   if (query.length < 2) return NextResponse.json({ results: [] });
   if (query.length > 100)
     return NextResponse.json(
-      { error: "El nombre no puede superar100 caracteres." },
+      { error: "El nombre no puede superar 100 caracteres." },
       { status: 400 },
     );
   try {
