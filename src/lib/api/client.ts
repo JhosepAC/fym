@@ -1,53 +1,78 @@
 import { TMDB_CONFIG, ENDPOINTS } from "./config";
 
-class ApiClient {
+export class ApiClient {
   private baseUrl: string;
   private apiKey: string;
   private language: string;
 
-  constructor() {
+  constructor(apiKey = "") {
     this.baseUrl = TMDB_CONFIG.BASE_URL;
-    this.apiKey = TMDB_CONFIG.API_KEY || "";
+    this.apiKey = apiKey;
     this.language = TMDB_CONFIG.LANGUAGE;
   }
 
-  async fetch<T>(endpoint: string, params: Record<string, string> = {}): Promise<T> {
-    const url = new URL(`${this.baseUrl}${endpoint}`);
-    url.searchParams.append("api_key", this.apiKey);
+  async fetch<T>(
+    endpoint: string,
+    params: Record<string, string> = {},
+  ): Promise<T> {
+    const browser = typeof window !== "undefined";
+    if (!browser && !this.apiKey)
+      throw new Error("TMDB no está configurado en el servidor.");
+    const url = new URL(
+      browser ? `/api/tmdb${endpoint}` : `${this.baseUrl}${endpoint}`,
+      browser ? window.location.origin : undefined,
+    );
+    if (!browser) url.searchParams.set("api_key", this.apiKey);
     url.searchParams.append("language", this.language);
 
     Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.append(key, value);
+      url.searchParams.set(key, value);
     });
 
-    const response = await fetch(url.toString());
+    try {
+      const response = await fetch(url.toString(), {
+        ...(browser ? {} : { next: { revalidate: 3600 } }),
+        signal: AbortSignal.timeout(15000),
+      });
 
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      throw error;
     }
-
-    return response.json();
   }
 
   async getTrending(mediaType: "all" | "movie" | "tv" = "all") {
-    const endpoint = mediaType === "all" ? ENDPOINTS.trending : `/trending/${mediaType}/week`;
+    const endpoint =
+      mediaType === "all" ? ENDPOINTS.trending : `/trending/${mediaType}/week`;
     return this.fetch<ApiResponse>(endpoint);
   }
 
   async getMoviePopular(page: number = 1) {
-    return this.fetch<ApiResponse>(ENDPOINTS.movie.popular, { page: String(page) });
+    return this.fetch<ApiResponse>(ENDPOINTS.movie.popular, {
+      page: String(page),
+    });
   }
 
   async getMovieTopRated(page: number = 1) {
-    return this.fetch<ApiResponse>(ENDPOINTS.movie.topRated, { page: String(page) });
+    return this.fetch<ApiResponse>(ENDPOINTS.movie.topRated, {
+      page: String(page),
+    });
   }
 
   async getMovieUpcoming(page: number = 1) {
-    return this.fetch<ApiResponse>(ENDPOINTS.movie.upcoming, { page: String(page) });
+    return this.fetch<ApiResponse>(ENDPOINTS.movie.upcoming, {
+      page: String(page),
+    });
   }
 
   async getMovieNowPlaying(page: number = 1) {
-    return this.fetch<ApiResponse>(ENDPOINTS.movie.nowPlaying, { page: String(page) });
+    return this.fetch<ApiResponse>(ENDPOINTS.movie.nowPlaying, {
+      page: String(page),
+    });
   }
 
   async getMovieDetails(id: number) {
@@ -55,19 +80,27 @@ class ApiClient {
   }
 
   async getMovieSimilar(id: number, page: number = 1) {
-    return this.fetch<ApiResponse>(ENDPOINTS.movie.similar(id), { page: String(page) });
+    return this.fetch<ApiResponse>(ENDPOINTS.movie.similar(id), {
+      page: String(page),
+    });
   }
 
   async getMovieRecommendations(id: number, page: number = 1) {
-    return this.fetch<ApiResponse>(ENDPOINTS.movie.recommendations(id), { page: String(page) });
+    return this.fetch<ApiResponse>(ENDPOINTS.movie.recommendations(id), {
+      page: String(page),
+    });
   }
 
   async getTvSimilar(id: number, page: number = 1) {
-    return this.fetch<ApiResponse>(ENDPOINTS.tv.similar(id), { page: String(page) });
+    return this.fetch<ApiResponse>(ENDPOINTS.tv.similar(id), {
+      page: String(page),
+    });
   }
 
   async getTvRecommendations(id: number, page: number = 1) {
-    return this.fetch<ApiResponse>(ENDPOINTS.tv.recommendations(id), { page: String(page) });
+    return this.fetch<ApiResponse>(ENDPOINTS.tv.recommendations(id), {
+      page: String(page),
+    });
   }
 
   async getMovieCredits(id: number) {
@@ -75,19 +108,27 @@ class ApiClient {
   }
 
   async getMovieWatchProviders(id: number) {
-    return this.fetch<WatchProvidersResponse>(ENDPOINTS.movie.watchProviders(id));
+    return this.fetch<WatchProvidersResponse>(
+      ENDPOINTS.movie.watchProviders(id),
+    );
   }
 
   async getTvPopular(page: number = 1) {
-    return this.fetch<ApiResponse>(ENDPOINTS.tv.popular, { page: String(page) });
+    return this.fetch<ApiResponse>(ENDPOINTS.tv.popular, {
+      page: String(page),
+    });
   }
 
   async getTvTopRated(page: number = 1) {
-    return this.fetch<ApiResponse>(ENDPOINTS.tv.topRated, { page: String(page) });
+    return this.fetch<ApiResponse>(ENDPOINTS.tv.topRated, {
+      page: String(page),
+    });
   }
 
   async getTvOnTheAir(page: number = 1) {
-    return this.fetch<ApiResponse>(ENDPOINTS.tv.onTheAir, { page: String(page) });
+    return this.fetch<ApiResponse>(ENDPOINTS.tv.onTheAir, {
+      page: String(page),
+    });
   }
 
   async getTvDetails(id: number) {
@@ -102,12 +143,20 @@ class ApiClient {
     return this.fetch<WatchProvidersResponse>(ENDPOINTS.tv.watchProviders(id));
   }
 
-  async discoverMovies(genre: number, page: number = 1, sortBy: string = "popularity.desc") {
+  async discoverMovies(
+    genre: number,
+    page: number = 1,
+    sortBy: string = "popularity.desc",
+  ) {
     const endpoint = ENDPOINTS.movie.discover(genre, page, sortBy);
     return this.fetch<ApiResponse>(endpoint);
   }
 
-  async discoverSeries(genre: number, page: number = 1, sortBy: string = "popularity.desc") {
+  async discoverSeries(
+    genre: number,
+    page: number = 1,
+    sortBy: string = "popularity.desc",
+  ) {
     const endpoint = ENDPOINTS.tv.discover(genre, page, sortBy);
     return this.fetch<ApiResponse>(endpoint);
   }
@@ -117,19 +166,35 @@ class ApiClient {
   }
 
   async getTvSeasonAggregateCredits(id: number, seasonNumber: number) {
-    return this.fetch<SeasonAggregateCredits>(ENDPOINTS.tv.seasonAggregateCredits(id, seasonNumber));
+    return this.fetch<SeasonAggregateCredits>(
+      ENDPOINTS.tv.seasonAggregateCredits(id, seasonNumber),
+    );
   }
 
   async getTvSeasonVideos(id: number, seasonNumber: number) {
-    return this.fetch<VideosResponse>(ENDPOINTS.tv.seasonVideos(id, seasonNumber));
+    return this.fetch<VideosResponse>(
+      ENDPOINTS.tv.seasonVideos(id, seasonNumber),
+    );
   }
 
-  async getTvEpisodeImages(id: number, seasonNumber: number, episodeNumber: number) {
-    return this.fetch<EpisodeImagesResponse>(ENDPOINTS.tv.episodeImages(id, seasonNumber, episodeNumber));
+  async getTvEpisodeImages(
+    id: number,
+    seasonNumber: number,
+    episodeNumber: number,
+  ) {
+    return this.fetch<EpisodeImagesResponse>(
+      ENDPOINTS.tv.episodeImages(id, seasonNumber, episodeNumber),
+    );
   }
 
-  async getTvEpisodeVideos(id: number, seasonNumber: number, episodeNumber: number) {
-    return this.fetch<VideosResponse>(ENDPOINTS.tv.episodeVideos(id, seasonNumber, episodeNumber));
+  async getTvEpisodeVideos(
+    id: number,
+    seasonNumber: number,
+    episodeNumber: number,
+  ) {
+    return this.fetch<VideosResponse>(
+      ENDPOINTS.tv.episodeVideos(id, seasonNumber, episodeNumber),
+    );
   }
 
   async getMovieVideos(id: number) {
@@ -166,13 +231,18 @@ class ApiClient {
   }
 
   async getMediaVideos(mediaType: "movie" | "tv", id: number) {
-    const endpoint = mediaType === "movie" 
-      ? ENDPOINTS.movie.videos(id) 
-      : ENDPOINTS.tv.videos(id);
+    const endpoint =
+      mediaType === "movie"
+        ? ENDPOINTS.movie.videos(id)
+        : ENDPOINTS.tv.videos(id);
     return this.fetch<VideosResponse>(endpoint);
   }
-  
-  async getSearchResults(mediaType: "multi" | "movie" | "tv", query: string, page: number = 1) {
+
+  async getSearchResults(
+    mediaType: "multi" | "movie" | "tv",
+    query: string,
+    page: number = 1,
+  ) {
     const endpoint = ENDPOINTS.search[mediaType];
     return this.fetch<ApiResponse>(endpoint, { query, page: String(page) });
   }
@@ -327,7 +397,7 @@ export interface VideosResponse {
 
 export interface EpisodeImagesResponse {
   id: number;
- stills: {
+  stills: {
     aspect_ratio: number;
     height: number;
     width: number;
@@ -399,7 +469,10 @@ export interface WatchProvidersResponse {
   results: Record<string, CountryProviders>;
 }
 
-export const getImageUrl = (path: string | null | undefined, size: string = "w500"): string | null => {
+export const getImageUrl = (
+  path: string | null | undefined,
+  size: string = "w500",
+): string | null => {
   if (!path) return null;
   return `${TMDB_CONFIG.IMAGE_BASE_URL}/${size}${path}`;
 };

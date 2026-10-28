@@ -25,8 +25,10 @@ export function useSearch() {
 
     try {
       const response = await apiClient.searchMulti(searchQuery);
-      setResults(response.results.filter((item) => item.media_type !== "person"));
-    } catch (err) {
+      setResults(
+        response.results.filter((item) => item.media_type !== "person"),
+      );
+    } catch {
       setError("Failed to search. Please try again.");
       setResults([]);
     } finally {

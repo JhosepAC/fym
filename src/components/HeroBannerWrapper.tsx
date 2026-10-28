@@ -8,10 +8,10 @@ export default function HeroBannerWrapper({ items }: { items: MediaItem[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   return (
-    <HeroBanner 
-      items={items} 
-      currentIndex={currentIndex} 
-      onIndexChange={setCurrentIndex} 
+    <HeroBanner
+      items={items}
+      currentIndex={currentIndex}
+      onIndexChange={setCurrentIndex}
     />
   );
 }

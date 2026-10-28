@@ -1,20 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Rubik_Glitch } from "next/font/google";
+import { Inter } from "next/font/google";
+import { LibraryProvider } from "@/components/LibraryProvider";
+import Footer from "@/components/Footer";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const rubikGlitch = Rubik_Glitch({
-  variable: "--font-rubik-glitch",
-  weight: "400",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -30,7 +21,8 @@ export const viewport: Viewport = {
 
 const APP_NAME = "FyM - Find Your Movie";
 const APP_URL = "https://fym-jac.vercel.app";
-const APP_DESCRIPTION = "Discover movies and TV shows. Explore trending, popular, top rated content with cast, trailers, and streaming providers.";
+const APP_DESCRIPTION =
+  "Encuentra tu próxima película o serie. Explora tendencias, consulta reparto y proveedores, y organiza tu lista personal de cine.";
 const APP_IMAGE = "/assets/og/og-image.jpg";
 
 export const metadata: Metadata = {
@@ -40,7 +32,18 @@ export const metadata: Metadata = {
     template: "%s | FyM",
   },
   description: APP_DESCRIPTION,
-  keywords: ["movies", "TV shows", "film", "cinema", "streaming", "TMDB", "actor", "cast", "trailers", "reviews"],
+  keywords: [
+    "movies",
+    "TV shows",
+    "film",
+    "cinema",
+    "streaming",
+    "TMDB",
+    "actor",
+    "cast",
+    "trailers",
+    "reviews",
+  ],
   authors: [{ name: "Jhosep Argomedo" }],
   creator: "Jhosep Argomedo",
   publisher: "Jhosep Argomedo",
@@ -70,8 +73,7 @@ export const metadata: Metadata = {
       template: "%s | FyM",
     },
     description: APP_DESCRIPTION,
-    locale: "en_US",
-    alternateLocale: "es_ES",
+    locale: "es_ES",
     images: [
       {
         url: APP_IMAGE,
@@ -90,15 +92,17 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: APP_URL,
-    languages: {
-      en: APP_URL,
-      es: `${APP_URL}/es`,
-    },
   },
   icons: {
     icon: [
-      { url: "/assets/favicon/favicon-dark.svg", media: "(prefers-color-scheme: light)" },
-      { url: "/assets/favicon/favicon-light.svg", media: "(prefers-color-scheme: dark)" },
+      {
+        url: "/assets/favicon/favicon-dark.svg",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/assets/favicon/favicon-light.svg",
+        media: "(prefers-color-scheme: dark)",
+      },
     ],
   },
 } as const;
@@ -129,17 +133,22 @@ export default function RootLayout({
   };
 
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${rubikGlitch.variable} h-full antialiased`}
-    >
+    <html lang="es" className={`${inter.variable} h-full antialiased`}>
       <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body>
+        <LibraryProvider>
+          <a href="#main-content" className="skip-link">
+            Saltar al contenido
+          </a>
+          {children}
+          <Footer />
+        </LibraryProvider>
+      </body>
     </html>
   );
 }

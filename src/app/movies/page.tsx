@@ -1,25 +1,18 @@
-import MoviesClient from "./MoviesClient";
-import { apiClient } from "@/lib/api";
-
-async function getData() {
-  const [trending, popular, topRated, upcoming] = await Promise.all([
-    apiClient.getTrending("movie"),
+import Catalog from "@/components/Catalog";
+import { serverApiClient as apiClient } from "@/lib/api/server";
+export const metadata = { title: "Películas" };
+export const revalidate = 3600;
+export default async function MoviesPage() {
+  const [popular, trending, topRated, upcoming] = await Promise.all([
     apiClient.getMoviePopular(),
+    apiClient.getTrending("movie"),
     apiClient.getMovieTopRated(),
     apiClient.getMovieUpcoming(),
   ]);
-
-  return { trending, popular, topRated, upcoming };
-}
-
-async function getPopularMovies(page: number = 1) {
-  return apiClient.getMoviePopular(page);
-}
-
-export const revalidate = 3600;
-
-export default async function MoviesPage() {
-  const initialData = await getData();
-  const popularMovies = await getPopularMovies(1);
-  return <MoviesClient initialData={initialData} popularMovies={popularMovies.results} />;
+  return (
+    <Catalog
+      kind="movie"
+      initialData={{ popular, trending, topRated, upcoming }}
+    />
+  );
 }

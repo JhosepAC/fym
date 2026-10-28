@@ -1,25 +1,18 @@
-import SeriesClient from "./SeriesClient";
-import { apiClient } from "@/lib/api";
-
-async function getData() {
-  const [trending, popular, topRated, onTheAir] = await Promise.all([
-    apiClient.getTrending("tv"),
+import Catalog from "@/components/Catalog";
+import { serverApiClient as apiClient } from "@/lib/api/server";
+export const metadata = { title: "Series" };
+export const revalidate = 3600;
+export default async function SeriesPage() {
+  const [popular, trending, topRated, upcoming] = await Promise.all([
     apiClient.getTvPopular(),
+    apiClient.getTrending("tv"),
     apiClient.getTvTopRated(),
     apiClient.getTvOnTheAir(),
   ]);
-
-  return { trending, popular, topRated, onTheAir };
-}
-
-async function getPopularSeries(page: number = 1) {
-  return apiClient.getTvPopular(page);
-}
-
-export const revalidate = 3600;
-
-export default async function SeriesPage() {
-  const initialData = await getData();
-  const popularSeries = await getPopularSeries(1);
-  return <SeriesClient initialData={initialData} popularSeries={popularSeries.results} />;
+  return (
+    <Catalog
+      kind="tv"
+      initialData={{ popular, trending, topRated, upcoming }}
+    />
+  );
 }
