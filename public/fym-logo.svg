@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 148 48" fill="none">
+  <title>FyM — Find Your Movie</title>
+  <path fill="#fff" d="M4 6h39v9H15v9h21v9H15v9H4V6Zm89 36V6h11l15 19 15-19h10v36h-11V22l-14 17-15-17v20H93Z"/>
+  <path fill="#dc283a" d="m47 16 11 0 9 15 9-15h11L65 48H53l8-11-14-21Z"/>
+  <path fill="#dc283a" d="m19 36 24-5v11l-24-6Z"/>
+</svg>

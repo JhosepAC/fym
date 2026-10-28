@@ -268,3 +268,7 @@ El diálogo nativo tiene ancho máximo de 900 px, margen mínimo de 16 px y altu
 - **Don't** inventar carteles, puntuaciones o disponibilidad para completar una composición.
 - **Don't** introducir otra familia tipográfica, mayúsculas ornamentales o encabezados auxiliares sin función.
 - **Don't** heredar las sombras del componente antiguo MovieFilters; el catálogo vigente usa controles nativos y el rojo procede de los tokens de marca aprobados.
+
+## Identidad y acceso a decisión
+
+El logo compartido utiliza `public/fym-logo.svg`: letras vectoriales propias F/y/M, blanco y rojo, con un corte de proyección bajo la F. No depende de fuentes instaladas. Cabecera y pie consumen el componente Logo. El destino «Elige por mí» usa una acción roja con icono en navegación y un botón de 44 px en inicio. El footer conserva una atribución TMDB breve y el crédito enlazado a Jhosep Argomedo.
