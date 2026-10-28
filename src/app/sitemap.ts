@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { apiClient } from "@/lib/api";
+import { serverApiClient as apiClient } from "@/lib/api/server";
 
 const BASE_URL = "https://fym-jac.vercel.app";
 
@@ -24,6 +24,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
+      url: `${BASE_URL}/decide`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    },
+    {
       url: `${BASE_URL}/search`,
       lastModified: new Date(),
       changeFrequency: "weekly" as const,
@@ -37,16 +43,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       apiClient.getTrending("tv"),
     ]);
 
-    const movieUrls = (trendingMovies.results || []).slice(0, 20).map((movie) => ({
-      url: `${BASE_URL}/movie/${movie.id}`,
-      lastModified: new Date(movie.release_date ? new Date(movie.release_date) : new Date()),
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
-    }));
+    const movieUrls = (trendingMovies.results || [])
+      .slice(0, 20)
+      .map((movie) => ({
+        url: `${BASE_URL}/movie/${movie.id}`,
+        lastModified: new Date(
+          movie.release_date ? new Date(movie.release_date) : new Date(),
+        ),
+        changeFrequency: "weekly" as const,
+        priority: 0.8,
+      }));
 
     const tvUrls = (trendingTv.results || []).slice(0, 20).map((show) => ({
       url: `${BASE_URL}/series/${show.id}`,
-      lastModified: new Date(show.first_air_date ? new Date(show.first_air_date) : new Date()),
+      lastModified: new Date(
+        show.first_air_date ? new Date(show.first_air_date) : new Date(),
+      ),
       changeFrequency: "weekly" as const,
       priority: 0.8,
     }));
