@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Icon from "./Icon";
+import Logo from "./Logo";
 import { useLibrary } from "./LibraryProvider";
 interface NavbarProps {
   onSearch?: (query: string) => void;
@@ -51,22 +52,17 @@ export default function Navbar({ onSearch, initialQuery = "" }: NavbarProps) {
     <header className="site-header">
       <div className="nav-inner">
         <Link className="brand" href="/" aria-label="FyM, inicio">
-          <svg viewBox="0 0 30 30" fill="none" aria-hidden="true">
-            <path
-              d="M4 4h8v8H4zM18 4h8v8h-8zM4 18h8v8H4z"
-              fill="currentColor"
-            />
-            <path d="m19 18 8 4-8 4z" fill="currentColor" />
-          </svg>
-          <span>FyM.</span>
+          <Logo />
         </Link>
         <nav className="desktop-nav" aria-label="Navegación principal">
           {links.map((link) => (
             <Link
               key={link.href}
+              className={link.href === "/decide" ? "nav-decide" : undefined}
               href={link.href}
               aria-current={pathname === link.href ? "page" : undefined}
             >
+              {link.href === "/decide" && <Icon name="shuffle" size={16} />}
               {link.label}
             </Link>
           ))}
@@ -119,6 +115,7 @@ export default function Navbar({ onSearch, initialQuery = "" }: NavbarProps) {
           {links.map((link) => (
             <Link
               key={link.href}
+              className={link.href === "/decide" ? "nav-decide" : undefined}
               href={link.href}
               onClick={() => setOpen(false)}
               aria-current={pathname === link.href ? "page" : undefined}

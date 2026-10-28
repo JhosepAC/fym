@@ -1837,3 +1837,20 @@ dialog::backdrop {
     width: 190px;
   }
 }
+
+/* FyM wordmark: custom letterforms and a red projection cut. */
+.fym-logo { display: block; width: 111px; height: 36px; }
+.footer-brand .fym-logo { width: 86px; height: 28px; }
+.desktop-nav a.nav-decide, .mobile-navigation a.nav-decide {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--brand); color: #fff; padding: 11px 16px;
+  border-radius: 99px; font-weight: 600; min-height: 42px;
+}
+.desktop-nav a.nav-decide:hover, .mobile-navigation a.nav-decide:hover,
+.desktop-nav a.nav-decide[aria-current] { background: #b91e2e; color: #fff; }
+.decide-cta { display: inline-flex; align-items: center; justify-content: center; gap: 12px; padding: 0 20px; border-radius: 99px; background: var(--brand); color: #fff; min-height: 44px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.decide-cta:hover { background: #b91e2e; }
+.site-footer .developer-credit { align-self: center; font-size: 12px; }
+.developer-credit a { color: var(--text); text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 1150px) { .nav-inner { gap: 24px; } .desktop-nav { gap: 16px; } }
+@media (max-width: 650px) { .brand .fym-logo { width: 90px; height: 30px; } .mobile-navigation a.nav-decide { margin: 6px 0; } }

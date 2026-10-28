@@ -25,7 +25,7 @@ export default function Discovery({
       </div>
       <p>Prepara tu selección y deja que la ruleta elija la película.</p>
       <div className="button-row">
-        <Link className="text-link" href="/decide">
+        <Link className="button-primary decide-cta" href="/decide">
           Elige por mí
           <Icon name="arrow" size={15} />
         </Link>
